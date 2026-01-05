@@ -1,0 +1,3 @@
+[submodule "SDL-Drawing-Library"]
+	path = SDL-Drawing-Library
+	url = https://github.com/Explothusist/SDL-Drawing-Library
