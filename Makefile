@@ -8,7 +8,7 @@ main.exe: main.cpp $(HELPER_INCLUDE) Drawing-Library
 	g++ -Wall -o main.exe main.cpp $(HELPER_INCLUDE) $(DRAWING_LIB_INCLUDE) $(SDL_CFLAGS) $(SDL_LDFLAGS)
 
 menus\MenuHandler.o: menus\MenuHandler.cpp
-	g++ -Wall -c menus\MenuHandler.cpp -o menus\MenuHandler.o
+	g++ -Wall -c menus\MenuHandler.cpp -o menus\MenuHandler.o $(SDL_CFLAGS) $(SDL_LDFLAGS)
 
 Drawing-Library:
 	$(MAKE) -C SDL-Drawing-Library

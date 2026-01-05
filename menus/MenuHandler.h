@@ -5,8 +5,11 @@
 #include <vector>
 #include <string>
 
+class DrawingContext;
+
 typedef enum {
-    TO_MENU
+    EFFECT_NONE,
+    EFFECT_TO_MENU
 } EntryEffectType;
 
 class EntryEffect {
@@ -26,9 +29,10 @@ class Menu {
         Menu();
         Menu(std::string menu_title, std::vector<std::string> entries, std::vector<EntryEffect> entry_effects);
 
-        void drawSelf();
+        void drawSelf(DrawingContext* ctx);
         void triggerScrollEvent(int direction);
         EntryEffect triggerSelectEvent();
+        void setSelected(int select);
     private:
         std::string m_menu_title;
         std::vector<std::string> m_entries;
@@ -41,7 +45,7 @@ class Menu_Handler {
         Menu_Handler();
         // Define destructor only if needed
 
-        void drawSelf();
+        void drawSelf(DrawingContext* ctx);
 
         int addMenu(std::string menu_title, std::vector<std::string> entries, std::vector<EntryEffect> entry_effects);
         void triggerScrollEvent(int direction);

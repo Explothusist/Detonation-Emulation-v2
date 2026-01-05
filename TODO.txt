@@ -1,0 +1,9 @@
+Read in ROM file
+
+Emulator settings file (keybindings, recent games)
+Emulator ram folder
+Emulator folder for roms
+Emulator itself
+
+Questions:
+Load game from directory through menu or file popup (preferred)?
