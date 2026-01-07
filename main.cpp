@@ -19,9 +19,9 @@ typedef enum {
 } EmulatorState;
 
 
-void readSettingsFiles(std::vector<std::string>* recent_games) {
-    recent_games = readRecentGamesFile();
-};
+// void readSettingsFiles(std::vector<std::string>* recent_games) {
+//     recent_games = readRecentGamesFile();
+// };
 
 void setupMenus(Menu_Handler* m_menus) { // TODO: Needs to know contents of ROM directory and emulator settings
     const int main_menu = 0;
@@ -55,8 +55,8 @@ void setupMenus(Menu_Handler* m_menus) { // TODO: Needs to know contents of ROM 
 
 int main() {
     
-    std::vector<std::string>* m_recent_games{ };
-    readSettingsFiles(m_recent_games);
+    std::vector<std::string>* m_recent_games{ new std::vector<std::string>() };
+    m_recent_games = readRecentGamesFile();
     
     SDL_Log("COMPLETE: Initialization: Emulator Data Retreived");
 
