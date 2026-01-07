@@ -7,7 +7,6 @@
 #include <filesystem>
 
 std::vector<std::string>* readRecentGamesFile() {
-    printf("readRecentGamesFile\n");
     std::vector<std::string>* recent_games{ new std::vector<std::string>() };
 
     std::ifstream f_recent_games; // Input (read) file
@@ -35,11 +34,8 @@ std::vector<std::string>* readRecentGamesFile() {
         create_f_recent_games.close();
         printf("COMPLETE: Initialization: Created File 'data/recent_games.txt'\n");
     }else {
-        printf("file exists\n");
         std::string line;
         while (getline(f_recent_games, line)) {
-            printf("reading line\n");
-            printf((line+"\n").c_str());
             recent_games->push_back(line);
         }
         f_recent_games.close();
@@ -48,32 +44,23 @@ std::vector<std::string>* readRecentGamesFile() {
     return recent_games;
 };
 void saveRecentGamesFile(std::vector<std::string>* recent_games) {
-    printf("Saving recent games\n");
     std::ofstream f_recent_games; // Output (write) file
-    printf("Tick\n");
     f_recent_games.open("data/recent_games.txt", std::ios::trunc);
-    printf("Tock\n");
     if (!f_recent_games.is_open()) {
         // printf("ERROR: Save Data: Could Not Creat File 'data/recent_games.txt'\n");
-    printf("Click\n");
 
         std::filesystem::create_directory("data");
         printf("COMPLETE: Save Data: Created Directory 'data'\n");
         f_recent_games.open("data/recent_games.txt");
     }
 
-    printf("Clock\n");
     for (int i = 0; i < static_cast<int>(recent_games->size()); i++) {
-    printf("Wrrrrr\n");
-    printf(recent_games->at(i).c_str());
         f_recent_games << recent_games->at(i).c_str();
         if (i != static_cast<int>(recent_games->size())) {
             f_recent_games << "\n";
         }
     }
-    printf("Cha\n");
     f_recent_games.close();
-    printf("Ching\n");
 };
 
 std::string openROMFilePicker(HWND window_handle) {

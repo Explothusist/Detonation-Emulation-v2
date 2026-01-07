@@ -145,23 +145,17 @@ void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
 };
 void Menu_Handler::addGameToRecent(std::string filepath) {
     bool match_found{ false };
-    SDL_Log("Boo");
     for (int i = 0; i < static_cast<int>(m_recent_games->size()); i++) {
-    SDL_Log("Radley");
         if (m_recent_games->at(i) == filepath) {
-    SDL_Log("Was");
             m_recent_games->erase(m_recent_games->begin() + i);
             match_found = true;
             break;
         }
     }
-    SDL_Log("Here");
     if (!match_found) {
         m_recent_games->pop_back();
     }
-    SDL_Log("Bwa");
     m_recent_games->insert(m_recent_games->begin(), filepath);
-    SDL_Log("Ha");
 };
 
 DrawingContext* Menu_Handler::getCtx() {

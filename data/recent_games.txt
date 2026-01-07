@@ -1,4 +1,4 @@
-D:\Emulator Data\ROMs\Castlevania II - Belmont's Revenge (USA, Europe).gb
-D:\Emulator Data\ROMs\Dr. Mario (World).gb
 D:\Emulator Data\ROMs\Legend of Zelda, The - Link's Awakening (USA, Europe).gb
-
+D:\Emulator Data\ROMs\Tetris (World) (Rev 1).gb
+D:\Emulator Data\ROMs\Mega Man - Dr. Wily's Revenge (USA).gb
+D:\Emulator Data\ROMs\Castlevania II - Belmont's Revenge (USA, Europe).gb
