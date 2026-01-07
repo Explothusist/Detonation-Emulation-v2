@@ -23,7 +23,7 @@ typedef enum {
 //     recent_games = readRecentGamesFile();
 // };
 
-void setupMenus(Menu_Handler* m_menus) { // TODO: Needs to know contents of ROM directory and emulator settings
+void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games) { // TODO: Needs to know contents of ROM directory and emulator settings
     const int main_menu = 0;
     const int recent_menu = 1;
     // const int load_menu = 2;
@@ -68,7 +68,7 @@ int main() {
 
         Menu_Handler* m_menus{ new Menu_Handler(m_ctx, m_recent_games) };
         EmulatorState m_state{ State_InMenu };
-        setupMenus(m_menus);
+        setupMenus(m_menus, m_recent_games);
 
         bool quit{ false };
         
