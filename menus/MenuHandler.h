@@ -2,6 +2,7 @@
 #ifndef INTERFACE_MENU_
 #define INTERFACE_MENU_
 
+#include <SDL3/SDL.h>
 #include <vector>
 #include <string>
 
@@ -9,7 +10,8 @@ class DrawingContext;
 
 typedef enum {
     EFFECT_NONE,
-    EFFECT_TO_MENU
+    EFFECT_TO_MENU,
+    EFFECT_SELECT_ROM
 } EntryEffectType;
 
 class EntryEffect {
@@ -42,18 +44,27 @@ class Menu {
 
 class Menu_Handler {
     public:
-        Menu_Handler();
+        Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games);
         // Define destructor only if needed
 
-        void drawSelf(DrawingContext* ctx);
+        void drawSelf();
 
         int addMenu(std::string menu_title, std::vector<std::string> entries, std::vector<EntryEffect> entry_effects);
         void triggerScrollEvent(int direction);
         EntryEffect triggerSelectEvent();
         void switchToMenu(int menu);
+        void processEvent(SDL_Event* event);
+
+        void interpretMenuEffect(EntryEffect effect);
+        void addGameToRecent(std::string filepath);
+
+        DrawingContext* getCtx();
     private:
         std::vector<Menu> m_menus;
         int m_menu_selected;
+
+        DrawingContext* m_ctx;
+        std::vector<std::string>* m_recent_games;
 };
 
 #endif

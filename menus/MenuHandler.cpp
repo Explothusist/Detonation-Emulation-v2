@@ -1,6 +1,7 @@
 
 #include "MenuHandler.h"
 
+#include "../filehandle.h"
 #include "../SDL-Drawing-Library/DrawingContext.h"
 
 EntryEffect::EntryEffect():
@@ -77,15 +78,17 @@ void Menu::setSelected(int select) {
 };
 
 
-Menu_Handler::Menu_Handler():
+Menu_Handler::Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games):
     m_menus{ },
-    m_menu_selected{ 0 }
+    m_menu_selected{ 0 },
+    m_ctx{ ctx },
+    m_recent_games{ recent_games }
 {
 
 };
 
-void Menu_Handler::drawSelf(DrawingContext* ctx) {
-    m_menus[m_menu_selected].drawSelf(ctx);
+void Menu_Handler::drawSelf() {
+    m_menus[m_menu_selected].drawSelf(getCtx());
 };
 int Menu_Handler::addMenu(std::string menu_title, std::vector<std::string> entries, std::vector<EntryEffect> entry_effects) {
     m_menus.push_back(Menu(menu_title, entries, entry_effects));
@@ -102,4 +105,58 @@ void Menu_Handler::switchToMenu(int menu) {
         m_menus[m_menu_selected].setSelected(0);
     }
     m_menu_selected = menu;
+};
+void Menu_Handler::processEvent(SDL_Event* event) {
+    if (event->type == SDL_EVENT_KEY_DOWN) { // KeyPress
+        
+    }else if (event->type == SDL_EVENT_KEY_UP) { // KeyRelease
+        if (event->key.key == SDLK_UP) { // TODO: Use customized controls as well
+            triggerScrollEvent(-1);
+        }else if (event->key.key == SDLK_DOWN) {
+            triggerScrollEvent(1);
+        }else if (event->key.key == SDLK_RETURN || event->key.key == SDLK_SPACE) {
+            interpretMenuEffect(triggerSelectEvent());
+        }
+    }else if (event->type == SDL_EVENT_MOUSE_MOTION) {
+        
+    }else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
+        
+    }else if (event->type == SDL_EVENT_MOUSE_BUTTON_UP) {
+        
+    }
+};
+
+void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
+    switch (effect.getType()) {
+        case EFFECT_NONE:
+            break;
+        case EFFECT_TO_MENU:
+            switchToMenu(effect.getArg());
+            break;
+        case EFFECT_SELECT_ROM:
+            std::string filepath = openROMFilePicker(getCtx()->getWindowHandle());
+            if (filepath != "") {
+                addGameToRecent(filepath);
+            }
+            
+            break;
+    }
+};
+void Menu_Handler::addGameToRecent(std::string filepath) {
+    bool match_found{ false };
+    for (int i = 0; i < static_cast<int>(m_recent_games->size()); i++) {
+        if (m_recent_games->at(i) == filepath) {
+            m_recent_games->erase(m_recent_games->begin() + i);
+            match_found = true;
+            break;
+        }
+    }
+    if (!match_found) {
+        m_recent_games->pop_back();
+    }
+    m_recent_games->insert(m_recent_games->begin(), filepath);
+};
+
+DrawingContext* Menu_Handler::getCtx() {
+    return m_ctx;
 };
