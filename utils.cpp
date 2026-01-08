@@ -30,3 +30,21 @@ std::vector<uint32_t>* get_default_keybindings() {
 // std::string get_string_from_keycode(uint32_t code) {
 //     return SDL_GetKeyName(code); // Turns out this is easy, so this function is redundant
 // };
+
+Emulator_Options::Emulator_Options(bool run_boot_rom):
+    m_run_boot_rom{ run_boot_rom },
+    m_temp_run_boot_rom{ run_boot_rom }
+{
+    
+};
+void Emulator_Options::forget_temps() {
+    m_temp_run_boot_rom = m_run_boot_rom;
+};
+void Emulator_Options::save_temps() {
+    m_run_boot_rom = m_temp_run_boot_rom;
+};
+
+
+Emulator_Options* get_default_options() {
+    return new Emulator_Options(true);
+};

@@ -94,18 +94,22 @@ void Menu::setSelected(int select) {
     m_entry_selected = select;
 };
 void Menu::replaceKeyEntry(int entry, std::string new_key) {
+    if (entry == -1) {
+        entry = m_entry_selected;
+    }
     std::string base = m_entries[entry];
     m_entries[entry] = base.substr(0, base.find_first_of(":") + 1) + " " + new_key;
 };
 
 
-Menu_Handler::Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, std::vector<uint32_t>* temp_keybindings):
+Menu_Handler::Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, std::vector<uint32_t>* temp_keybindings, Emulator_Options* options):
     m_menus{ },
     m_menu_selected{ 0 },
     m_ctx{ ctx },
     m_recent_games{ recent_games },
     m_keybindings{ keybindings },
     m_temp_keybindings{ temp_keybindings },
+    m_options{ options },
     m_bind_next_key{ false },
     m_bind_to_key{ 0 }
 {
@@ -206,6 +210,20 @@ void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
         case EFFECT_SAVE_KEYBIND:
             *m_keybindings = *m_temp_keybindings;
             saveKeybindingsFile(m_keybindings);
+            switchToMenu(effect.getArg());
+            break;
+        case EFFECT_TOGGLE_BOOT_ROM:
+            m_options->m_temp_run_boot_rom = !m_options->m_temp_run_boot_rom;
+            m_menus[m_menu_selected].replaceKeyEntry(-1, (m_options->m_temp_run_boot_rom ? "True" : "False"));
+            break;
+        case EFFECT_FORGET_OPTIONS:
+            m_options->forget_temps();
+            m_menus[m_menu_selected].replaceKeyEntry(0, (m_options->m_run_boot_rom ? "True" : "False"));
+            switchToMenu(effect.getArg());
+            break;
+        case EFFECT_SAVE_OPTIONS:
+            m_options->save_temps();
+            saveOptionsFile(m_options);
             switchToMenu(effect.getArg());
             break;
     }

@@ -17,23 +17,25 @@ std::vector<std::string>* readRecentGamesFile() {
     if (!f_recent_games.is_open()) {
         printf("WARNING: Initialization: File 'data/recent_games.txt' Not Found\n");
 
-        std::ofstream create_f_recent_games;
-        create_f_recent_games.open("data/recent_games.txt");
-        if (!create_f_recent_games.is_open()) {
-            // printf("ERROR: Initialization: Could Not Creat File 'data/recent_games.txt'\n");
-
-            std::filesystem::create_directory("data");
-            printf("COMPLETE: Initialization: Created Directory 'data'\n");
-            create_f_recent_games.open("data/recent_games.txt");
-        }
-
-        for (int i = 0; i < 5-1; i++) {
-            create_f_recent_games << "\n";
-        }
         for (int i = 0; i < 5; i++) {
             recent_games->push_back("");
         }
-        create_f_recent_games.close();
+        saveRecentGamesFile(recent_games);
+
+        // std::ofstream create_f_recent_games;
+        // create_f_recent_games.open("data/recent_games.txt");
+        // if (!create_f_recent_games.is_open()) {
+        //     // printf("ERROR: Initialization: Could Not Creat File 'data/recent_games.txt'\n");
+
+        //     std::filesystem::create_directory("data");
+        //     printf("COMPLETE: Initialization: Created Directory 'data'\n");
+        //     create_f_recent_games.open("data/recent_games.txt");
+        // }
+
+        // for (int i = 0; i < 5-1; i++) {
+        //     create_f_recent_games << "\n";
+        // }
+        // create_f_recent_games.close();
         printf("COMPLETE: Initialization: Created File 'data/recent_games.txt'\n");
     }else {
         std::string line;
@@ -61,7 +63,7 @@ void saveRecentGamesFile(std::vector<std::string>* recent_games) {
 
     for (int i = 0; i < static_cast<int>(recent_games->size()); i++) {
         f_recent_games << recent_games->at(i).c_str();
-        if (i != static_cast<int>(recent_games->size())) {
+        if (i != static_cast<int>(recent_games->size()) - 1) {
             f_recent_games << "\n";
         }
     }
@@ -77,23 +79,25 @@ std::vector<uint32_t>* readKeybindingsFile() {
     if (!f_keybindings_file.is_open()) {
         printf("WARNING: Initialization: File 'data/keybindings.bin' Not Found\n");
 
-        std::ofstream create_f_keybindings;
-        create_f_keybindings.open("data/keybindings.bin", std::ios::binary);
-        if (!create_f_keybindings.is_open()) {
-            std::filesystem::create_directory("data");
-            printf("COMPLETE: Initialization: Created Directory 'data'\n");
-            create_f_keybindings.open("data/keybindings.bin", std::ios::binary);
-        }
-
         keybindings = get_default_keybindings();
-        // for (int i = 0; i < 8; i++) {
-        //     create_f_keybindings << keybindings.at(i);
+        saveKeybindingsFile(keybindings);
+
+        // std::ofstream create_f_keybindings;
+        // create_f_keybindings.open("data/keybindings.bin", std::ios::binary);
+        // if (!create_f_keybindings.is_open()) {
+        //     std::filesystem::create_directory("data");
+        //     printf("COMPLETE: Initialization: Created Directory 'data'\n");
+        //     create_f_keybindings.open("data/keybindings.bin", std::ios::binary);
         // }
-        create_f_keybindings.write(
-            reinterpret_cast<const char*>(keybindings->data()),
-            8 * sizeof(uint32_t)
-        );
-        create_f_keybindings.close();
+
+        // // for (int i = 0; i < 8; i++) {
+        // //     create_f_keybindings << keybindings.at(i);
+        // // }
+        // create_f_keybindings.write(
+        //     reinterpret_cast<const char*>(keybindings->data()),
+        //     8 * sizeof(uint32_t)
+        // );
+        // create_f_keybindings.close();
         printf("COMPLETE: Initialization: Created File 'data/keybindings.bin'\n");
     }else {
         f_keybindings_file.seekg(0, std::ios::end);
@@ -102,15 +106,19 @@ std::vector<uint32_t>* readKeybindingsFile() {
 
         if (fileSize != 32) {
             printf("WARNING: Initialization: File 'data/keybindings.bin' Is Corrupted\n");
-            std::ofstream overwrite_f_keybindings;
-            overwrite_f_keybindings.open("data/keybindings.bin", std::ios::trunc | std::ios::binary);
 
             keybindings = get_default_keybindings();
-            overwrite_f_keybindings.write(
-                reinterpret_cast<const char*>(keybindings->data()),
-                8 * sizeof(uint32_t)
-            );
-            overwrite_f_keybindings.close();
+            saveKeybindingsFile(keybindings);
+
+            // std::ofstream overwrite_f_keybindings;
+            // overwrite_f_keybindings.open("data/keybindings.bin", std::ios::trunc | std::ios::binary);
+
+            // keybindings = get_default_keybindings();
+            // overwrite_f_keybindings.write(
+            //     reinterpret_cast<const char*>(keybindings->data()),
+            //     8 * sizeof(uint32_t)
+            // );
+            // overwrite_f_keybindings.close();
             printf("COMPLETE: Initialization: Repaired File 'data/keybindings.bin'\n");
         }else {
             if (f_keybindings_file.read(reinterpret_cast<char*>(keybindings->data()), 32)) {
@@ -141,6 +149,56 @@ void saveKeybindingsFile(std::vector<uint32_t>* keybindings) {
         8 * sizeof(uint32_t)
     );
     f_keybindings_file.close();
+};
+
+Emulator_Options* readOptionsFile() {
+    Emulator_Options* options{ nullptr };
+
+    std::ifstream f_options_file;
+    f_options_file.open("data/options.txt");
+
+    if (!f_options_file.is_open()) {
+        printf("WARNING: Initialization: File 'data/options.txt' Not Found\n");
+
+        options = get_default_options();
+
+        saveOptionsFile(options);
+
+        // std::ofstream create_f_options_file;
+        // create_f_options_file.open("data/options.txt");
+        // if (!create_f_options_file.is_open()) {
+        //     std::filesystem::create_directory("data");
+        //     printf("COMPLETE: Initialization: Created Directory 'data'\n");
+        //     create_f_options_file.open("data/options.txt");
+        // }
+
+
+        // create_f_options_file << std::boolalpha << options->m_run_boot_rom << "\n";
+        // create_f_options_file.close();
+        printf("COMPLETE: Initialization: Created File 'data/options.txt'\n");
+    }else {
+        std::string line;
+
+        getline(f_options_file, line);
+        bool run_boot_rom = (line == "true") ? true : false;
+
+        options = new Emulator_Options(run_boot_rom);
+        f_options_file.close();
+    }
+
+    return options;
+};
+void saveOptionsFile(Emulator_Options* options) {
+    std::ofstream f_options_file;
+    f_options_file.open("data/options.txt", std::ios::trunc);
+    if (!f_options_file.is_open()) {
+        std::filesystem::create_directory("data");
+        printf("COMPLETE: Save Data: Created Directory 'data'\n");
+        f_options_file.open("data/options.txt", std::ios::trunc);
+    }
+
+    f_options_file << std::boolalpha << options->m_run_boot_rom << "\n";
+    f_options_file.close();
 };
 
 std::string openROMFilePicker(HWND window_handle) {

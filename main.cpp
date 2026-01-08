@@ -24,7 +24,7 @@ typedef enum {
 //     recent_games = readRecentGamesFile();
 // };
 
-void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings) { // TODO: Needs to know contents of ROM directory and emulator settings
+void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, Emulator_Options* options) { // TODO: Needs to know contents of ROM directory and emulator settings
     const int main_menu = 0;
     const int recent_menu = 1;
     // const int load_menu = 2;
@@ -76,8 +76,8 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
     );
     m_menus->addMenu( // Options Menu
         "Options",
-        {"Screen Scale: 4", "Run Boot ROM: true", "Cancel", "Save"},
-        {EntryEffect(), EntryEffect(), EntryEffect(EFFECT_TO_MENU, main_menu), EntryEffect(EFFECT_TO_MENU, main_menu)}
+        {"Run Boot ROM: "+std::string(options->m_run_boot_rom ? "True" : "False"), "Cancel", "Save"},
+        {EntryEffect(EFFECT_TOGGLE_BOOT_ROM, -1), EntryEffect(EFFECT_FORGET_OPTIONS, main_menu), EntryEffect(EFFECT_SAVE_OPTIONS, main_menu)}
     );
 };
 
@@ -88,6 +88,8 @@ int main() {
 
     std::vector<uint32_t>* m_keybindings{ readKeybindingsFile() };
     std::vector<uint32_t>* m_temp_keybindings{ new std::vector<uint32_t>(*m_keybindings) };
+
+    Emulator_Options* m_options{ readOptionsFile() };
     
     SDL_Log("COMPLETE: Initialization: Emulator Data Retreived");
 
@@ -97,9 +99,9 @@ int main() {
         SDL_Log("ERROR: Main: Window.init() Failed");
     }else {
 
-        Menu_Handler* m_menus{ new Menu_Handler(m_ctx, m_recent_games, m_keybindings, m_temp_keybindings) };
+        Menu_Handler* m_menus{ new Menu_Handler(m_ctx, m_recent_games, m_keybindings, m_temp_keybindings, m_options) };
         EmulatorState m_state{ State_InMenu };
-        setupMenus(m_menus, m_recent_games, m_keybindings);
+        setupMenus(m_menus, m_recent_games, m_keybindings, m_options);
 
         bool quit{ false };
         

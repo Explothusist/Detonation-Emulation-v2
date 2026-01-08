@@ -8,6 +8,7 @@
 #include <cstdint>
 
 class DrawingContext;
+class Emulator_Options;
 
 typedef enum {
     EFFECT_NONE,
@@ -15,7 +16,10 @@ typedef enum {
     EFFECT_SELECT_ROM,
     EFFECT_SET_KEYBIND,
     EFFECT_FORGET_KEYBIND,
-    EFFECT_SAVE_KEYBIND
+    EFFECT_SAVE_KEYBIND,
+    EFFECT_TOGGLE_BOOT_ROM,
+    EFFECT_FORGET_OPTIONS,
+    EFFECT_SAVE_OPTIONS,
 } EntryEffectType;
 
 class EntryEffect {
@@ -50,7 +54,7 @@ class Menu {
 
 class Menu_Handler {
     public:
-        Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, std::vector<uint32_t>* temp_keybindings);
+        Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, std::vector<uint32_t>* temp_keybindings, Emulator_Options* options);
         ~Menu_Handler();
 
         void drawSelf();
@@ -73,6 +77,7 @@ class Menu_Handler {
         std::vector<std::string>* m_recent_games;
         std::vector<uint32_t>* m_keybindings;
         std::vector<uint32_t>* m_temp_keybindings;
+        Emulator_Options* m_options;
 
         bool m_bind_next_key;
         int m_bind_to_key;
