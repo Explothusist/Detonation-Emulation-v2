@@ -5,5 +5,8 @@ Emulator ram folder
 Emulator folder for roms
 Emulator itself
 
+Someday:
+Purge SDL .dll, .h
+Set up Releases
+
 Questions:
-Load game from directory through menu or file popup (preferred)?

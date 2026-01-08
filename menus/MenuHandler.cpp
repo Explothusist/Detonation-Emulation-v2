@@ -3,6 +3,7 @@
 
 #include "../filehandle.h"
 #include "../SDL-Drawing-Library/DrawingContext.h"
+#include "../utils.h"
 
 EntryEffect::EntryEffect():
     EntryEffect(EFFECT_NONE, 0)
@@ -33,14 +34,20 @@ Menu::Menu(std::string menu_title, std::vector<std::string> entries, std::vector
 
 };
 
-void Menu::drawSelf(DrawingContext* ctx) {
-    ctx->background(200, 200, 200);
+void Menu::drawSelf(DrawingContext* ctx, bool bind_next_key) {
+    if (!bind_next_key) {
+        ctx->background(200, 200, 200);
+    }else {
+        ctx->background(100, 100, 100);
+    }
 
     int base_w = 600;
     int base_h = 600;
 
-    int base_x = (ctx->getScreenWidth() - base_w) / 2;
-    int base_y = (ctx->getScreenHeight() - base_h) / 2;
+    int full_x = ctx->getScreenWidth();
+    int full_y = ctx->getScreenHeight();
+    int base_x = (full_x - base_w) / 2;
+    int base_y = (full_y - base_h) / 2;
 
     ctx->fill(50, 50, 50);
     ctx->rectOutline(base_x, base_y, base_w, base_h);
@@ -53,7 +60,17 @@ void Menu::drawSelf(DrawingContext* ctx) {
     for (int i = 0; i < static_cast<int>(m_entries.size()); i++) {
         if (i == m_entry_selected) {
             ctx->fill(160, 160, 160);
-            ctx->rect(base_x+70, base_y+75+(i*45), 300, 42);
+            // ctx->rect(base_x+70, base_y+75+(i*45), 300, 42);
+            // int width = 20+ctx->measureTextWidth(m_entries[i]);
+            ctx->rect(base_x+70, base_y+75+(i*45), 20+ctx->measureTextWidth(m_entries[i]), 42);
+
+            // if (bind_next_key) {
+            //     ctx->fill(50, 50, 50, 125);
+            //     ctx->rect(0, 0, base_x+70, full_y);
+            //     ctx->rect(base_x+70 + width, 0, full_x - (base_x+70 + width), full_y);
+            //     ctx->rect(base_x+70, 0, width, base_y+75+(i*45));
+            //     ctx->rect(base_x+70, base_y+75+(i*45) + 42, width, full_y - (base_y+75+(i*45) + 42));
+            // }
             ctx->fill(50, 50, 50);
         }
         ctx->text(m_entries[i], base_x+80, base_y+80+(i*45));
@@ -76,19 +93,31 @@ EntryEffect Menu::triggerSelectEvent() {
 void Menu::setSelected(int select) {
     m_entry_selected = select;
 };
+void Menu::replaceKeyEntry(int entry, std::string new_key) {
+    std::string base = m_entries[entry];
+    m_entries[entry] = base.substr(0, base.find_first_of(":") + 1) + " " + new_key;
+};
 
 
-Menu_Handler::Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games):
+Menu_Handler::Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, std::vector<uint32_t>* temp_keybindings):
     m_menus{ },
     m_menu_selected{ 0 },
     m_ctx{ ctx },
-    m_recent_games{ recent_games }
+    m_recent_games{ recent_games },
+    m_keybindings{ keybindings },
+    m_temp_keybindings{ temp_keybindings },
+    m_bind_next_key{ false },
+    m_bind_to_key{ 0 }
 {
 
 };
+Menu_Handler::~Menu_Handler() {
+    m_ctx = nullptr; // Don't delete them, that is a job for others
+    m_recent_games = nullptr;
+};
 
 void Menu_Handler::drawSelf() {
-    m_menus[m_menu_selected].drawSelf(getCtx());
+    m_menus[m_menu_selected].drawSelf(getCtx(), m_bind_next_key);
 };
 int Menu_Handler::addMenu(std::string menu_title, std::vector<std::string> entries, std::vector<EntryEffect> entry_effects) {
     m_menus.push_back(Menu(menu_title, entries, entry_effects));
@@ -110,12 +139,35 @@ void Menu_Handler::processEvent(SDL_Event* event) {
     if (event->type == SDL_EVENT_KEY_DOWN) { // KeyPress
         
     }else if (event->type == SDL_EVENT_KEY_UP) { // KeyRelease
-        if (event->key.key == SDLK_UP) { // TODO: Use customized controls as well
-            triggerScrollEvent(-1);
-        }else if (event->key.key == SDLK_DOWN) {
-            triggerScrollEvent(1);
-        }else if (event->key.key == SDLK_RETURN || event->key.key == SDLK_SPACE) {
-            interpretMenuEffect(triggerSelectEvent());
+        if (!m_bind_next_key) {
+            if (event->key.key == SDLK_UP) { // TODO: Use customized controls as well
+                triggerScrollEvent(-1);
+            }else if (event->key.key == SDLK_DOWN) {
+                triggerScrollEvent(1);
+            }else if (
+                event->key.key == SDLK_RETURN || 
+                event->key.key == SDLK_SPACE || 
+                event->key.key == SDLK_Z || 
+                event->key.key == SDLK_X
+            ) {
+                interpretMenuEffect(triggerSelectEvent());
+            }else {
+                if (event->key.key == m_keybindings->at(Key_Up)) {
+                    triggerScrollEvent(-1);
+                }else if (event->key.key == m_keybindings->at(Key_Down)) {
+                    triggerScrollEvent(1);
+                }else if (
+                    event->key.key == m_keybindings->at(Key_A) || 
+                    event->key.key == m_keybindings->at(Key_B) || 
+                    event->key.key == m_keybindings->at(Key_Start)
+                ) {
+                    interpretMenuEffect(triggerSelectEvent());
+                }
+            }
+        }else {
+            m_temp_keybindings->at(m_bind_to_key) = event->key.key;
+            m_bind_next_key = false;
+            m_menus[m_menu_selected].replaceKeyEntry(m_bind_to_key, SDL_GetKeyName(event->key.key));
         }
     }else if (event->type == SDL_EVENT_MOUSE_MOTION) {
         
@@ -133,13 +185,28 @@ void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
         case EFFECT_TO_MENU:
             switchToMenu(effect.getArg());
             break;
-        case EFFECT_SELECT_ROM:
+        case EFFECT_SELECT_ROM: { // Braces because the variable declaration
             std::string filepath = openROMFilePicker(getCtx()->getWindowHandle());
             if (filepath != "") {
                 addGameToRecent(filepath);
                 saveRecentGamesFile(m_recent_games);
+            } }
+            break;
+        case EFFECT_SET_KEYBIND:
+            m_bind_next_key = true;
+            m_bind_to_key = effect.getArg();
+            break;
+        case EFFECT_FORGET_KEYBIND:
+            *m_temp_keybindings = *m_keybindings;
+            for (int i = 0; i < 8; i++) {
+                m_menus[m_menu_selected].replaceKeyEntry(i, SDL_GetKeyName(m_keybindings->at(i)));
             }
-            
+            switchToMenu(effect.getArg());
+            break;
+        case EFFECT_SAVE_KEYBIND:
+            *m_keybindings = *m_temp_keybindings;
+            saveKeybindingsFile(m_keybindings);
+            switchToMenu(effect.getArg());
             break;
     }
 };
