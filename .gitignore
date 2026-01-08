@@ -1,4 +1,5 @@
 data/
+fonts/
 *.o
 *.exe
 *.dll
