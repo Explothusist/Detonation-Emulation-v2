@@ -139,10 +139,8 @@ void Menu_Handler::switchToMenu(int menu) {
     }
     m_menu_selected = menu;
 };
-void Menu_Handler::processEvent(SDL_Event* event) {
+bool Menu_Handler::processEvent(SDL_Event* event) {
     if (event->type == SDL_EVENT_KEY_DOWN) { // KeyPress
-        
-    }else if (event->type == SDL_EVENT_KEY_UP) { // KeyRelease
         if (!m_bind_next_key) {
             if (event->key.key == SDLK_UP) { // TODO: Use customized controls as well
                 triggerScrollEvent(-1);
@@ -154,7 +152,7 @@ void Menu_Handler::processEvent(SDL_Event* event) {
                 event->key.key == SDLK_Z || 
                 event->key.key == SDLK_X
             ) {
-                interpretMenuEffect(triggerSelectEvent());
+                return interpretMenuEffect(triggerSelectEvent());
             }else {
                 if (event->key.key == m_keybindings->at(Key_Up)) {
                     triggerScrollEvent(-1);
@@ -165,7 +163,7 @@ void Menu_Handler::processEvent(SDL_Event* event) {
                     event->key.key == m_keybindings->at(Key_B) || 
                     event->key.key == m_keybindings->at(Key_Start)
                 ) {
-                    interpretMenuEffect(triggerSelectEvent());
+                    return interpretMenuEffect(triggerSelectEvent());
                 }
             }
         }else {
@@ -173,6 +171,8 @@ void Menu_Handler::processEvent(SDL_Event* event) {
             m_bind_next_key = false;
             m_menus[m_menu_selected].replaceKeyEntry(m_bind_to_key, SDL_GetKeyName(event->key.key));
         }
+    }else if (event->type == SDL_EVENT_KEY_UP) { // KeyRelease
+        
     }else if (event->type == SDL_EVENT_MOUSE_MOTION) {
         
     }else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN) {
@@ -180,9 +180,10 @@ void Menu_Handler::processEvent(SDL_Event* event) {
     }else if (event->type == SDL_EVENT_MOUSE_BUTTON_UP) {
         
     }
+    return false;
 };
 
-void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
+bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
     switch (effect.getType()) {
         case EFFECT_NONE:
             break;
@@ -194,6 +195,8 @@ void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
             if (filepath != "") {
                 addGameToRecent(filepath);
                 saveRecentGamesFile(m_recent_games);
+                m_rom = readROMFile(filepath);
+                return true; // Time to start emulation
             } }
             break;
         case EFFECT_SET_KEYBIND:
@@ -212,9 +215,21 @@ void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
             saveKeybindingsFile(m_keybindings);
             switchToMenu(effect.getArg());
             break;
-        case EFFECT_TOGGLE_BOOT_ROM:
-            m_options->m_temp_run_boot_rom = !m_options->m_temp_run_boot_rom;
-            m_menus[m_menu_selected].replaceKeyEntry(-1, (m_options->m_temp_run_boot_rom ? "True" : "False"));
+        case EFFECT_TOGGLE:
+            switch (effect.getArg()) {
+                case TOGGLE_BOOT_ROM:
+                    m_options->m_temp_run_boot_rom = !m_options->m_temp_run_boot_rom;
+                    m_menus[m_menu_selected].replaceKeyEntry(-1, (m_options->m_temp_run_boot_rom ? "True" : "False"));
+                    break;
+                case TOGGLE_STRICT_LOADING:
+                    m_options->m_temp_strict_loading = !m_options->m_temp_strict_loading;
+                    m_menus[m_menu_selected].replaceKeyEntry(-1, (m_options->m_temp_strict_loading ? "True" : "False"));
+                    break;
+                case TOGGLE_DISPLAY_CART_INFO:
+                    m_options->m_temp_display_cart_info = !m_options->m_temp_display_cart_info;
+                    m_menus[m_menu_selected].replaceKeyEntry(-1, (m_options->m_temp_display_cart_info ? "True" : "False"));
+                    break;
+            }
             break;
         case EFFECT_FORGET_OPTIONS:
             m_options->forget_temps();
@@ -226,7 +241,17 @@ void Menu_Handler::interpretMenuEffect(EntryEffect effect) {
             saveOptionsFile(m_options);
             switchToMenu(effect.getArg());
             break;
+        case EFFECT_LOAD_RECENT: { // Braces because the variable declaration
+            std::string filepath = m_recent_games->at(effect.getArg());
+            if (filepath != "") {
+                addGameToRecent(filepath);
+                saveRecentGamesFile(m_recent_games);
+                m_rom = readROMFile(filepath);
+                return true; // Time to start emulation
+            } }
+            break;
     }
+    return false; // Not time to start emulation
 };
 void Menu_Handler::addGameToRecent(std::string filepath) {
     bool match_found{ false };
@@ -243,6 +268,9 @@ void Menu_Handler::addGameToRecent(std::string filepath) {
     m_recent_games->insert(m_recent_games->begin(), filepath);
 };
 
+std::vector<uint8_t>* Menu_Handler::getROM() {
+    return m_rom;
+};
 DrawingContext* Menu_Handler::getCtx() {
     return m_ctx;
 };

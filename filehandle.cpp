@@ -179,10 +179,20 @@ Emulator_Options* readOptionsFile() {
     }else {
         std::string line;
 
-        getline(f_options_file, line);
-        bool run_boot_rom = (line == "true") ? true : false;
+        bool run_boot_rom = true;
+        if (getline(f_options_file, line)) {
+            run_boot_rom = (line == "false") ? false : true; // true if broken
+        }
+        bool strict_loading = false;
+        if (getline(f_options_file, line)) {
+            strict_loading = (line == "true") ? true : false; // false if broken
+        }
+        bool display_cart_info = false;
+        if (getline(f_options_file, line)) {
+            display_cart_info = (line == "true") ? true : false; // false if broken
+        }
 
-        options = new Emulator_Options(run_boot_rom);
+        options = new Emulator_Options(run_boot_rom, strict_loading, display_cart_info);
         f_options_file.close();
     }
 
@@ -198,6 +208,8 @@ void saveOptionsFile(Emulator_Options* options) {
     }
 
     f_options_file << std::boolalpha << options->m_run_boot_rom << "\n";
+    f_options_file << std::boolalpha << options->m_strict_loading << "\n";
+    f_options_file << std::boolalpha << options->m_display_cart_info << "\n";
     f_options_file.close();
 };
 
@@ -234,6 +246,25 @@ std::string openROMFilePicker(HWND window_handle) {
         std::cout << "No file selected or operation canceled." << std::endl;
         return "";
     }
+};
+std::vector<uint8_t>* readROMFile(std::string path) {
+    std::vector<uint8_t>* rom{ nullptr };
+
+    std::ifstream f_rom_file;
+    f_rom_file.open(path, std::ios::binary);
+    if (!f_rom_file.is_open()) {
+        printf("ERROR: Read ROM File: Could Not Read File At Filepath '%s'", path.c_str());
+    }
+
+    f_rom_file.seekg(0, std::ios::end);
+    const std::streamsize file_size = f_rom_file.tellg();
+    f_rom_file.seekg(0, std::ios::beg);
+
+    rom = new std::vector<uint8_t>(file_size);
+
+    f_rom_file.read(reinterpret_cast<char*>(rom->data()), file_size);
+
+    return rom;
 };
 
 std::string trimPathAndLength(std::string path, int max_length) {

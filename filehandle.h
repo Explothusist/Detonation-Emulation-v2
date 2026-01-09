@@ -18,6 +18,7 @@ Emulator_Options* readOptionsFile();
 void saveOptionsFile(Emulator_Options* options);
 
 std::string openROMFilePicker(HWND window_handle);
+std::vector<uint8_t>* readROMFile(std::string path);
 
 std::string trimPathAndLength(std::string path, int max_length);
 

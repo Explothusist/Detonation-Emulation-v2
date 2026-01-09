@@ -17,10 +17,17 @@ typedef enum {
     EFFECT_SET_KEYBIND,
     EFFECT_FORGET_KEYBIND,
     EFFECT_SAVE_KEYBIND,
-    EFFECT_TOGGLE_BOOT_ROM,
+    EFFECT_TOGGLE,
     EFFECT_FORGET_OPTIONS,
     EFFECT_SAVE_OPTIONS,
+    EFFECT_LOAD_RECENT
 } EntryEffectType;
+
+typedef enum {
+    TOGGLE_BOOT_ROM,
+    TOGGLE_STRICT_LOADING,
+    TOGGLE_DISPLAY_CART_INFO
+} ToggleID;
 
 class EntryEffect {
     public:
@@ -63,10 +70,12 @@ class Menu_Handler {
         void triggerScrollEvent(int direction);
         EntryEffect triggerSelectEvent();
         void switchToMenu(int menu);
-        void processEvent(SDL_Event* event);
+        bool processEvent(SDL_Event* event); // Returns whether emulation should begin
 
-        void interpretMenuEffect(EntryEffect effect);
+        bool interpretMenuEffect(EntryEffect effect); // Returns whether emulation should begin
         void addGameToRecent(std::string filepath);
+
+        std::vector<uint8_t>* getROM(); // Use once it has been retreived (interpretMenuEffect returns true)
 
         DrawingContext* getCtx();
     private:
@@ -78,6 +87,8 @@ class Menu_Handler {
         std::vector<uint32_t>* m_keybindings;
         std::vector<uint32_t>* m_temp_keybindings;
         Emulator_Options* m_options;
+
+        std::vector<uint8_t>* m_rom;
 
         bool m_bind_next_key;
         int m_bind_to_key;

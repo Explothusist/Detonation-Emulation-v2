@@ -17,19 +17,30 @@ typedef enum {
     Key_B
 } Keybind;
 
+typedef enum {
+    State_InMenu,
+    State_InEmulator
+} EmulatorState;
+
 std::vector<uint32_t>* get_default_keybindings();
 
 // std::string get_string_from_keycode(uint32_t code);
 
 class Emulator_Options { // Just a container
     public:
-        Emulator_Options(bool run_boot_rom);
+        Emulator_Options(bool run_boot_rom, bool strict_loading, bool display_cart_info);
 
         void forget_temps();
         void save_temps();
 
         bool m_run_boot_rom;
         bool m_temp_run_boot_rom;
+
+        bool m_strict_loading;
+        bool m_temp_strict_loading;
+
+        bool m_display_cart_info;
+        bool m_temp_display_cart_info;
 };
 
 Emulator_Options* get_default_options();

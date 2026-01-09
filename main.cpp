@@ -6,18 +6,15 @@
 #include <filesystem>
 
 #include "menus/MenuHandler.h"
+#include "emulator/cpu.h"
 #include "filehandle.h"
 #include "utils.h"
 #include "SDL-Drawing-Library/DrawingContext.h"
 
+
 // Constants
 constexpr int kFrameRate{ 60U };
 constexpr int kNSPerFrame{ 16666666U }; // { 1,000,000,000 / kFrameRate };
-
-typedef enum {
-    State_InMenu,
-    State_InEmulator
-} EmulatorState;
 
 
 // void readSettingsFiles(std::vector<std::string>* recent_games) {
@@ -36,7 +33,7 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
     for (int i = 0; i < static_cast<int>(recent_games->size()); i++) {
         if (recent_games->at(i) != "") {
             recent_entries.push_back(trimPathAndLength(recent_games->at(i), 40));
-            recent_effects.push_back(EntryEffect());
+            recent_effects.push_back(EntryEffect(EFFECT_LOAD_RECENT, i));
         }
     }
     recent_entries.push_back("Back");
@@ -76,8 +73,20 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
     );
     m_menus->addMenu( // Options Menu
         "Options",
-        {"Run Boot ROM: "+std::string(options->m_run_boot_rom ? "True" : "False"), "Cancel", "Save"},
-        {EntryEffect(EFFECT_TOGGLE_BOOT_ROM, -1), EntryEffect(EFFECT_FORGET_OPTIONS, main_menu), EntryEffect(EFFECT_SAVE_OPTIONS, main_menu)}
+        {
+            "Run Boot ROM: "+std::string(options->m_run_boot_rom ? "True" : "False"),
+            "Strict Loading: "+std::string(options->m_strict_loading ? "True" : "False"),
+            "Display Cart Info: "+std::string(options->m_display_cart_info ? "True" : "False"),
+            "Cancel",
+            "Save"
+        },
+        {
+            EntryEffect(EFFECT_TOGGLE, TOGGLE_BOOT_ROM),
+            EntryEffect(EFFECT_TOGGLE, TOGGLE_STRICT_LOADING),
+            EntryEffect(EFFECT_TOGGLE, TOGGLE_DISPLAY_CART_INFO),
+            EntryEffect(EFFECT_FORGET_OPTIONS, main_menu),
+            EntryEffect(EFFECT_SAVE_OPTIONS, main_menu)
+        }
     );
 };
 
@@ -99,8 +108,9 @@ int main() {
         SDL_Log("ERROR: Main: Window.init() Failed");
     }else {
 
-        Menu_Handler* m_menus{ new Menu_Handler(m_ctx, m_recent_games, m_keybindings, m_temp_keybindings, m_options) };
         EmulatorState m_state{ State_InMenu };
+        Menu_Handler* m_menus{ new Menu_Handler(m_ctx, m_recent_games, m_keybindings, m_temp_keybindings, m_options) };
+        DMG_CPU* m_cpu{ new DMG_CPU(m_options, m_state) };
         setupMenus(m_menus, m_recent_games, m_keybindings, m_options);
 
         bool quit{ false };
@@ -114,7 +124,7 @@ int main() {
         SDL_Log("COMPLETE: Initialization: Beginning Main Loop");
 
         // Do Setup things here:
-        m_ctx->loadFont(Eight_Bit_Plus);
+        m_ctx->loadFont("fonts/8bitOperatorPlus-Regular.ttf");
         m_ctx->setTextResizePixelated(true);
 
         // Loading Initial Screen
@@ -132,8 +142,11 @@ int main() {
                         quit = true;
                     }else {
                         switch (m_state) {
-                            case State_InMenu:
-                                m_menus->processEvent(&event);
+                            case State_InMenu: {
+                                bool begin_emulation = m_menus->processEvent(&event);
+                                if (begin_emulation) {
+                                    m_cpu->Start_Emulation(m_menus->getROM());
+                                } }
                                 break;
                             case State_InEmulator:
                                 break;
@@ -158,6 +171,8 @@ int main() {
         // DESTROY THINGS!
         delete m_menus;
         m_menus = nullptr;
+        delete m_cpu;
+        m_cpu = nullptr;
     }
 
     // DESTROY THINGS!
