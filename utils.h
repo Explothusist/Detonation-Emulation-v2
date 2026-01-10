@@ -22,6 +22,15 @@ typedef enum {
     State_InEmulator
 } EmulatorState;
 
+typedef enum {
+    Main_Menu,
+    Pause_Menu,
+    Recent_Menu,
+    Keybindings_Menu,
+    Options_Menu,
+    Cartridge_Info
+} Menu_ID;
+
 std::vector<uint32_t>* get_default_keybindings();
 
 // std::string get_string_from_keycode(uint32_t code);

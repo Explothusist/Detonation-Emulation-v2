@@ -39,7 +39,7 @@ menus\MenuHandler.o: menus\MenuHandler.cpp
 	g++ $(CFLAGS) -c menus\MenuHandler.cpp -o menus\MenuHandler.o $(SDL_CFLAGS)
 
 emulator\cpu.o: emulator\cpu.cpp
-	g++ $(CFLAGS) -c emulator\cpu.cpp -o emulator\cpu.o
+	g++ $(CFLAGS) -c emulator\cpu.cpp -o emulator\cpu.o $(SDL_CFLAGS)
 
 emulator\memory.o: emulator\memory.cpp
 	g++ $(CFLAGS) -c emulator\memory.cpp -o emulator\memory.o

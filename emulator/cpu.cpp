@@ -1,11 +1,18 @@
 
 #include "cpu.h"
 
-DMG_CPU::DMG_CPU(Emulator_Options* options, EmulatorState &state):
+#include "../menus/MenuHandler.h"
+#include "../SDL-Drawing-Library/DrawingContext.h" // This is mortally incorrect
+
+DMG_CPU::DMG_CPU(DrawingContext* ctx, Menu_Handler* menus, Emulator_Options* options, EmulatorState &state):
     m_Memory{ Memory_Handler() },
     m_regs{ Register_Handler() },
+    m_ctx{ ctx },
+    m_menus{ menus },
     m_options{ options },
-    m_state{ state }
+    m_state{ state },
+    m_initialized{ false },
+    m_emulation_begun{ false }
 {
 
 };
@@ -72,14 +79,73 @@ void DMG_CPU::Start_Emulation(std::vector<uint8_t>* rom) {
         m_Memory._Set(0xffff, 0x00);
     }
 
+    m_menus->replaceKeyEntriesOnMenu(m_Memory.getCartDetails(), Cartridge_Info); // Cartridge Info
+
     if (!m_Memory.hadLoadError() && !(m_options->m_strict_loading && m_Memory.hadLoadWarning())) {
         if (m_options->m_display_cart_info) { // Confirmation Screen, actually
-            printf("Well, confirmation screen actually\n");
-        }else {
+            // printf("Well, confirmation screen actually\n");
+            m_menus->switchToMenu(Cartridge_Info); // Cartridge Info
+        }else { // Popup Time!!! WORKING HERE
             printf("COMPLETE: Emulation Setup: Emulation Beginning\n");
+            m_menus->switchToMenu(Pause_Menu); // Pause Menu
             m_state = State_InEmulator;
+            m_emulation_begun = true;
         }
     }else {
         printf("ERROR: Emulation Setup: Emulation Aborted\n");
+        m_menus->createPopup(Popup(
+            "An error has occured while loading the cartridge: "+m_Memory.getFirstError(),
+            {"Cancel", "View Details"},
+            {EntryEffect(EFFECT_NONE, -1), EntryEffect(EFFECT_TO_MENU, Cartridge_Info)}
+        ));
     }
+};
+void DMG_CPU::Resume_Emulation() {
+    if (!m_emulation_begun) {
+        if (!m_Memory.hadLoadError()) {
+            printf("COMPLETE: Emulation Setup: Emulation Beginning\n");
+            m_menus->switchToMenu(Pause_Menu); // Pause Menu
+            m_state = State_InEmulator;
+            m_emulation_begun = true;
+        }else {
+            printf("ERROR: Emulation Setup: Emulation Aborted\n");
+            m_menus->createPopup(Popup(
+                "The cartridge cannot be loaded because of the error: "+m_Memory.getFirstError(),
+                {"Cancel"},
+                {EntryEffect(EFFECT_TO_MENU, -1)}
+            ));
+        }
+    }else {
+        m_state = State_InEmulator;
+    }
+};
+
+void DMG_CPU::drawSelf() {
+    m_ctx->background(0, 0, 0);
+
+    int dmg_width = 160;
+    int dmg_height = 144;
+
+    int full_x = m_ctx->getScreenWidth();
+    int full_y = m_ctx->getScreenHeight();
+    int max_scale = std::min(full_x / dmg_width, full_y / dmg_height);
+
+    int base_w = dmg_width * max_scale;
+    int base_h = dmg_height * max_scale;
+
+    int base_x = (full_x - base_w) / 2;
+    int base_y = (full_y - base_h) / 2;
+
+    m_ctx->fill(200, 200, 200);
+    m_ctx->rect(base_x, base_y, base_w, base_h);
+
+    m_ctx->presentRenderer();
+};
+
+bool DMG_CPU::hasInitialized() {
+    return m_initialized;
+};
+void DMG_CPU::unInitialize() {
+    m_initialized = false;
+    m_Memory.Full_Reset();
 };

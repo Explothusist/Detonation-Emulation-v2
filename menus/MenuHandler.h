@@ -2,25 +2,31 @@
 #ifndef INTERFACE_MENU_
 #define INTERFACE_MENU_
 
-#include <SDL3/SDL.h>
+// #include <SDL3/SDL.h>
 #include <vector>
 #include <string>
 #include <cstdint>
 
 class DrawingContext;
 class Emulator_Options;
+union SDL_Event;
+class DMG_CPU;
 
 typedef enum {
     EFFECT_NONE,
     EFFECT_TO_MENU,
-    EFFECT_SELECT_ROM,
+    EFFECT_SELECT_ROM_RELOAD_RECENT,
     EFFECT_SET_KEYBIND,
     EFFECT_FORGET_KEYBIND,
     EFFECT_SAVE_KEYBIND,
     EFFECT_TOGGLE,
     EFFECT_FORGET_OPTIONS,
     EFFECT_SAVE_OPTIONS,
-    EFFECT_LOAD_RECENT
+    EFFECT_LOAD_RECENT_RELOAD_RECENT,
+    EFFECT_BACK_TO_EMULATOR,
+    EFFECT_RETURN_TO_MAIN,
+    EFFECT_LOAD_ANYWAY,
+    EFFECT_TO_MENU_UNINITIALIZE_EMULATOR
 } EntryEffectType;
 
 typedef enum {
@@ -52,11 +58,29 @@ class Menu {
         void setSelected(int select);
 
         void replaceKeyEntry(int entry, std::string new_key);
+        void setEntries(std::vector<std::string> entries);
+        void setEffects(std::vector<EntryEffect> entry_effects);
     private:
         std::string m_menu_title;
         std::vector<std::string> m_entries;
         std::vector<EntryEffect> m_entry_effects;
         int m_entry_selected;
+};
+
+class Popup {
+    public:
+        Popup();
+        Popup(std::string text, std::vector<std::string> buttons, std::vector<EntryEffect> button_effects);
+
+        void drawSelf(DrawingContext* ctx);
+        void triggerScrollEvent(int direction);
+        EntryEffect triggerSelectEvent();
+        void setSelected(int select);
+    private:
+        std::string m_text;
+        std::vector<std::string> m_buttons;
+        std::vector<EntryEffect> m_button_effects;
+        int m_button_selected;
 };
 
 class Menu_Handler {
@@ -75,14 +99,24 @@ class Menu_Handler {
         bool interpretMenuEffect(EntryEffect effect); // Returns whether emulation should begin
         void addGameToRecent(std::string filepath);
 
+        void createPopup(Popup popup);
+
         std::vector<uint8_t>* getROM(); // Use once it has been retreived (interpretMenuEffect returns true)
 
+        void replaceKeyEntriesOnMenu(std::vector<std::string> new_keys, int menu);
+        void reloadRecentGamesMenu(int menu);
+
         DrawingContext* getCtx();
+        void setCPU(DMG_CPU* m_cpu);
     private:
         std::vector<Menu> m_menus;
+        Popup m_popup;
+        bool m_popup_active;
         int m_menu_selected;
+        int m_last_menu;
 
         DrawingContext* m_ctx;
+        DMG_CPU* m_cpu;
         std::vector<std::string>* m_recent_games;
         std::vector<uint32_t>* m_keybindings;
         std::vector<uint32_t>* m_temp_keybindings;

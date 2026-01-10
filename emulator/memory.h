@@ -66,9 +66,11 @@ class Memory_Handler {
         void _Set(uint16_t address, uint8_t data); // For setup/internal, raw input without checks
         uint8_t PC_Eat_Byte(Register_Handler &regs);
 
-        std::string readROMName();
         bool hadLoadError();
         bool hadLoadWarning();
+        std::string getFirstError();
+
+        std::vector<std::string> getCartDetails();
 
     private:
         // uint8_t X0000_ROM_STATIC[0x4000]; // (Switchable) // Reference m_RomBanks directly
@@ -89,6 +91,8 @@ class Memory_Handler {
         bool m_in_boot_rom_internal;
         bool m_has_load_error;
         bool m_has_load_warning;
+        std::string m_first_error;
+        std::string m_first_warning;
 
         int m_rom_bank_1; // Only switchable on later cartridges
         int m_rom_bank_2;
@@ -98,6 +102,10 @@ class Memory_Handler {
         std::string m_cart_name;
         std::string m_rom_size_name;
         std::string m_ram_size_name;
+        std::string m_is_cgb_cart;
+        std::string m_licensee;
+        bool m_passes_checksum;
+        bool m_valid_logo;
 
         int m_mbc_type; // Only emulate MBC cartridges, for now
         bool m_cart_has_ram;
@@ -111,6 +119,8 @@ class Memory_Handler {
         void interpret_cartridge_type(uint8_t cart_type);
         void interpret_rom_size_type(uint8_t rom_size);
         void interpret_ram_size_type(uint8_t ram_size);
+        void interpret_licensee_code(uint8_t old_code, uint8_t new_code_1, uint8_t new_code_2);
+        std::string readROMName(std::vector<uint8_t>* rom);
 };
 
 #endif
