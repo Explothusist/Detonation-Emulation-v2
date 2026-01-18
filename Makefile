@@ -21,8 +21,12 @@ else
 endif
 
 # --- SDL paths ---
-SDL_CFLAGS  = -ISDL-Drawing-Library/x86_64-w64-mingw32/include
-SDL_LDFLAGS = -LSDL-Drawing-Library/x86_64-w64-mingw32/lib
+SDL_BASE = SDL3-3.4.0
+SDL_IMAGE = SDL3_image-3.2.6
+SDL_TTF = SDL3_ttf-3.2.2
+
+SDL_CFLAGS = -ISDL-Drawing-Library/$(SDL_BASE)/include -ISDL-Drawing-Library/$(SDL_IMAGE)/include -ISDL-Drawing-Library/$(SDL_TTF)/include
+SDL_LDFLAGS = -LSDL-Drawing-Library/$(SDL_BASE)/lib -LSDL-Drawing-Library/$(SDL_IMAGE)/lib -LSDL-Drawing-Library/$(SDL_TTF)/lib -lSDL3 -lSDL3_image -lSDL3_ttf
 SDL_LDLIBS  = -lSDL3 -lSDL3_image -lSDL3_ttf
 
 # --- Source files ---
@@ -66,7 +70,7 @@ LDLIBS  += $(SDL_LDLIBS) -lcomdlg32
 # --- Main target ---
 all: $(TARGET)
 
-$(TARGET): main.cpp $(HELPER_OBJS) $(DRAWING_LIB_OBJS) Drawing-Library
+$(TARGET): main.cpp $(HELPER_OBJS) $(DRAWING_LIB_OBJS)
 ifeq ($(OS),Windows_NT)
 	@if not exist "$(BUILD_DIR)" mkdir "$(BUILD_DIR)"
 else
@@ -84,8 +88,9 @@ endif
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
 # --- Drawing library ---
-Drawing-Library:
-	$(MAKE) -C SDL-Drawing-Library
+# Built by the Pattern rule
+# Drawing-Library:
+# 	$(MAKE) -C SDL-Drawing-Library
 
 # --- Include auto-generated dependency files ---
 -include $(HELPER_OBJS:.o=.d)
@@ -102,3 +107,5 @@ else
 	$(RMDIR) $(BUILD_DIR)
 	$(RM) $(TARGET)
 endif
+
+.PHONY: clean cleanAll

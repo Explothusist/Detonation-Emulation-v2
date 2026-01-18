@@ -14,41 +14,41 @@ To update to the most recent release, download the new release and copy the data
 
 ## Building the Source Code
 
-To build, you will need SDL3, SDL3_image, and SDL3_ttf. When downloading releases, use `<library>-devel-3.X.X-mingw.zip` for MinGW and (standard) Clang on Windows, `<library>-devel-3.X.X-mingw.tar.gz` for MinGW and Clang on Linux, or `<library>-devel-3.X.X-VC.zip` for MSVC or MSVC Clang on Windows.
+The recommended build environment is MinGW on 64bit Windows. To build, you will need SDL3, SDL3_image, and SDL3_ttf. When downloading releases, use `<library>-devel-3.X.X-mingw.zip` for MinGW and (standard) Clang on Windows, `<library>-devel-3.X.X-mingw.tar.gz` for MinGW and Clang on Linux, or `<library>-devel-3.X.X-VC.zip` for MSVC or MSVC Clang on Windows.
 
 To build on Windows, I recommend downloading GNUWin32. See below for instructions.
 
 #### Downloading GNUWin32
 
-"make is a GNU command, so the only way you can get it on Windows is installing a Windows version like the one provided by GNUWin32. Anyway, there are several options for getting that:
-
-- Directly download from Make for Windows  
-- Using Chocolatey. First, you need to install this package manager. Once installed, you simply need to install make (you may need to run it in an elevated/administrator command prompt):  
-    - choco install make  
-- Another recommended option is installing a Windows Subsystem for Linux (WSL or WSL 2), so you'll have a Linux distribution of your choice embedded in Windows 10, where you'll be able to install make, gcc, and all the tools you need to build C programs.  
-- For older Windows versions (Microsoft Windows 2000, Windows XP, Windows Server 2003, Windows Vista, Windows Server 2008, or Windows 7 with msvcrt.dll) you can use GnuWin32.
-
-An outdated alternative was MinGW, but the project seems to be abandoned, so it's better to go for one of the previous choices."
-
-— Eduardo Yáñez Parareda, Stack Overflow answer to
-“How can I install and use "make" in Windows?”
-Original: https://stackoverflow.com/questions/32127524/how-can-i-install-and-use-make-in-windows
-Archive: https://web.archive.org/web/20251230160351/https://stackoverflow.com/questions/32127524/how-can-i-install-and-use-make-in-windows
-Licensed under CC BY-SA 4.0
+> "make is a GNU command, so the only way you can get it on Windows is installing a Windows version like the one provided by GNUWin32. Anyway, there are several options for getting that:
+> 
+> - Directly download from Make for Windows  
+> - Using Chocolatey. First, you need to install this package manager. Once installed, you simply need to install make (you may need to run it in an elevated/administrator command prompt):  
+>     - `choco install make`
+> - Another recommended option is installing a Windows Subsystem for Linux (WSL or WSL 2), so you'll have a Linux distribution of your choice embedded in Windows 10, where you'll be able to install make, gcc, and all the tools you need to build C programs.  
+> - For older Windows versions (Microsoft Windows 2000, Windows XP, Windows Server 2003, Windows Vista, Windows Server 2008, or Windows 7 with msvcrt.dll) you can use GnuWin32.
+> 
+> An outdated alternative was MinGW, but the project seems to be abandoned, so it's better to go for one of the previous choices."
+> 
+> — Eduardo Yáñez Parareda, Stack Overflow answer to
+> “How can I install and use "make" in Windows?”
+> Original: https://stackoverflow.com/questions/32127524/how-can-i-install-and-use-make-in-windows
+> Archive: https://web.archive.org/web/20251230160351/https://stackoverflow.com/questions/32127524/how-can-i-install-and-use-make-in-windows
+> Licensed under CC BY-SA 4.0
 
 ### MinGW/Clang
 
 1. Go to https://github.com/libsdl-org/SDL/releases/tag/release-3.4.0 and download the SDL3 release 3.4.0. See above for exactly which file to download.
 2. Extract the folder and copy the `SDL3-devel-3.4.0-mingw/SDL3-3.4.0/x86_64-w64-mingw32` (or `/i686-w64-mingw32` for 32-bit computers) folder contents (`bin`, `include`, `lib`, `share`) into `SDL-Drawing-Library/SDL3`.
-3. Copy `SDL-Drawing-Library/SDL3/bin/SDL3.dll` (newly created) into the main project folder.
+3. Copy `SDL-Drawing-Library/SDL3/bin/SDL3.dll` into the main project folder.
 
 4. Go to https://github.com/libsdl-org/SDL_image/releases/tag/release-3.2.6 and download the SDL3_image release 3.2.6. See above for exactly which file to download.
 5. Extract the foler and copy the `SDL3_image-devel-3.2.6-mingw/SDL3_image-3.2.6/x86_64-w64-mingw32` (or `/i686-w64-mingw32/` for 32-bit computers) folder contents (`bin`, `include`, `lib`, `share`) into `SDL-Drawing-Library/SDL3_image`.
-6. Copy `SDL-Drawing-Library/SDL3_image/bin/SDL3_image.dll` (newly created) into the main project folder.
+6. Copy `SDL-Drawing-Library/SDL3_image/bin/SDL3_image.dll` into the main project folder.
 
 7. Go to https://github.com/libsdl-org/SDL_ttf/releases/tag/release-3.2.2 and download the SDL_ttf release 3.2.2. See above for exactly which file to download.
 8. Extract the foler and copy the `SDL_ttf-devel-3.2.2-mingw/SDL_ttf-3.2.2/x86_64-w64-mingw32` (or `/i686-w64-mingw32/` for 32-bit computers) folder contents (`bin`, `include`, `lib`, `share`) into `SDL-Drawing-Library/SDL_ttf`.
-9. Copy `SDL-Drawing-Library/SDL_ttf/bin/SDL_ttf.dll` (newly created) into the main project folder.
+9. Copy `SDL-Drawing-Library/SDL_ttf/bin/SDL_ttf.dll` into the main project folder.
 
 10. Finally, open Command Prompt (or applicable terminal) in the main project folder and run `make BUILD=release CXX=g++` (or `CXX=clang++` for Clang). Run the `DetonationEmulation.exe` file to run the emulator.
 
