@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include "../utils.h"
 
 enum class Reg_u8 {
     A, F,
@@ -71,6 +72,7 @@ class Memory_Handler {
         std::string getFirstError();
 
         std::vector<std::string> getCartDetails();
+        std::vector<EntryColor> getCartDetailColors();
 
     private:
         // uint8_t X0000_ROM_STATIC[0x4000]; // (Switchable) // Reference m_RomBanks directly
@@ -106,6 +108,14 @@ class Memory_Handler {
         std::string m_licensee;
         bool m_passes_checksum;
         bool m_valid_logo;
+        EntryColor m_romname_color; // For display only
+        EntryColor m_cart_name_color;
+        EntryColor m_rom_size_name_color;
+        EntryColor m_ram_size_name_color;
+        EntryColor m_is_cgb_cart_color;
+        EntryColor m_licensee_color;
+        EntryColor m_passes_checksum_color;
+        EntryColor m_valid_logo_color;
 
         int m_mbc_type; // Only emulate MBC cartridges, for now
         bool m_cart_has_ram;

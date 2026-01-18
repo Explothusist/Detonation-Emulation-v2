@@ -1,5 +1,7 @@
 data/
-fonts/
+build/
+saves/
 *.o
+*.d
 *.exe
 *.dll

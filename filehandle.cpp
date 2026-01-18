@@ -218,7 +218,8 @@ std::string openROMFilePicker(HWND window_handle) {
     GetCurrentDirectory(MAX_PATH, currentDir); // GetOpenFileName messes up CWD
 
     OPENFILENAME ofn;       // Common dialog box structure
-    char szFile[260];    // Buffer for file name
+    // Buffer for file name
+    char szFile[260] = {0};  // or memset(szFile, 0, sizeof(szFile));
 
     // Initialize OPENFILENAME
     ZeroMemory(&ofn, sizeof(ofn));
@@ -226,7 +227,8 @@ std::string openROMFilePicker(HWND window_handle) {
     ofn.hwndOwner = window_handle;
     ofn.lpstrFile = szFile;
     ofn.nMaxFile = sizeof(szFile);  // Maximum length of the file path
-    ofn.lpstrFilter = "GameBoy ROM Files (*.gb)\0*.GB\0All Files (*.*)\0*.*\0";  // Filter for .gb files
+    char filter[] = "GameBoy ROM Files (*.gb)\0*.GB\0All Files (*.*)\0*.*\0\0";
+    ofn.lpstrFilter = filter;  // Filter for .gb files
     ofn.nFilterIndex = 1;  // Start with the first filter (GameBoy ROM files)
     ofn.lpstrFileTitle = NULL; // We don't need the file name separately
     ofn.nMaxFileTitle = 0;  // Not needed here
@@ -254,6 +256,7 @@ std::vector<uint8_t>* readROMFile(std::string path) {
     f_rom_file.open(path, std::ios::binary);
     if (!f_rom_file.is_open()) {
         printf("ERROR: Read ROM File: Could Not Read File At Filepath '%s'", path.c_str());
+        return nullptr;
     }
 
     f_rom_file.seekg(0, std::ios::end);

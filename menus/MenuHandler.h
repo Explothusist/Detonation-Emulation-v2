@@ -6,34 +6,12 @@
 #include <vector>
 #include <string>
 #include <cstdint>
+#include "../utils.h"
 
 class DrawingContext;
 class Emulator_Options;
 union SDL_Event;
 class DMG_CPU;
-
-typedef enum {
-    EFFECT_NONE,
-    EFFECT_TO_MENU,
-    EFFECT_SELECT_ROM_RELOAD_RECENT,
-    EFFECT_SET_KEYBIND,
-    EFFECT_FORGET_KEYBIND,
-    EFFECT_SAVE_KEYBIND,
-    EFFECT_TOGGLE,
-    EFFECT_FORGET_OPTIONS,
-    EFFECT_SAVE_OPTIONS,
-    EFFECT_LOAD_RECENT_RELOAD_RECENT,
-    EFFECT_BACK_TO_EMULATOR,
-    EFFECT_RETURN_TO_MAIN,
-    EFFECT_LOAD_ANYWAY,
-    EFFECT_TO_MENU_UNINITIALIZE_EMULATOR
-} EntryEffectType;
-
-typedef enum {
-    TOGGLE_BOOT_ROM,
-    TOGGLE_STRICT_LOADING,
-    TOGGLE_DISPLAY_CART_INFO
-} ToggleID;
 
 class EntryEffect {
     public:
@@ -58,13 +36,17 @@ class Menu {
         void setSelected(int select);
 
         void replaceKeyEntry(int entry, std::string new_key);
+        void setEntryColor(int entry, EntryColor new_color);
         void setEntries(std::vector<std::string> entries);
         void setEffects(std::vector<EntryEffect> entry_effects);
+        void setColors(std::vector<EntryColor> entry_colors);
     private:
         std::string m_menu_title;
         std::vector<std::string> m_entries;
         std::vector<EntryEffect> m_entry_effects;
         int m_entry_selected;
+
+        std::vector<EntryColor> m_entry_colors;
 };
 
 class Popup {
@@ -104,6 +86,7 @@ class Menu_Handler {
         std::vector<uint8_t>* getROM(); // Use once it has been retreived (interpretMenuEffect returns true)
 
         void replaceKeyEntriesOnMenu(std::vector<std::string> new_keys, int menu);
+        void setColorsOnMenu(std::vector<EntryColor> new_colors, int menu);
         void reloadRecentGamesMenu(int menu);
 
         DrawingContext* getCtx();

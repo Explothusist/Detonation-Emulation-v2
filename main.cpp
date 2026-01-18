@@ -117,7 +117,7 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
             EntryEffect(),
             EntryEffect(),
             EntryEffect(),
-            EntryEffect(EFFECT_TO_MENU, -1),
+            EntryEffect(EFFECT_TO_MENU_UNINITIALIZE_EMULATOR, -1),
             EntryEffect(EFFECT_LOAD_ANYWAY, -1)
         }
     );

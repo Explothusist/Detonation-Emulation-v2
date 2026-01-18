@@ -1,12 +1,15 @@
-Read in ROM file
+v0.2.0:
+Detailed Build Instructions:
+    - Obtaining SDL3
 
-Emulator settings file (keybindings, recent games)
-Emulator ram folder
-Emulator folder for roms
+Read in RAM file
+Background for pause menus
+CPU instrs
+
 Emulator itself
 
 Someday:
-Purge SDL .dll, .h
-Set up Releases
 
 Questions:
+Different thread for screen/sound?
+Merge by opcode, by 4 cycle?

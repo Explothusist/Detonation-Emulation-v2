@@ -80,6 +80,7 @@ void DMG_CPU::Start_Emulation(std::vector<uint8_t>* rom) {
     }
 
     m_menus->replaceKeyEntriesOnMenu(m_Memory.getCartDetails(), Cartridge_Info); // Cartridge Info
+    m_menus->setColorsOnMenu(m_Memory.getCartDetailColors(), Cartridge_Info);
 
     if (!m_Memory.hadLoadError() && !(m_options->m_strict_loading && m_Memory.hadLoadWarning())) {
         if (m_options->m_display_cart_info) { // Confirmation Screen, actually
@@ -96,9 +97,10 @@ void DMG_CPU::Start_Emulation(std::vector<uint8_t>* rom) {
         m_menus->createPopup(Popup(
             "An error has occured while loading the cartridge: "+m_Memory.getFirstError(),
             {"Cancel", "View Details"},
-            {EntryEffect(EFFECT_NONE, -1), EntryEffect(EFFECT_TO_MENU, Cartridge_Info)}
+            {EntryEffect(EFFECT_UNINITIALIZE_EMULATOR, 0), EntryEffect(EFFECT_TO_MENU, Cartridge_Info)}
         ));
     }
+    m_initialized = true;
 };
 void DMG_CPU::Resume_Emulation() {
     if (!m_emulation_begun) {
@@ -112,7 +114,7 @@ void DMG_CPU::Resume_Emulation() {
             m_menus->createPopup(Popup(
                 "The cartridge cannot be loaded because of the error: "+m_Memory.getFirstError(),
                 {"Cancel"},
-                {EntryEffect(EFFECT_TO_MENU, -1)}
+                {EntryEffect(EFFECT_TO_MENU_UNINITIALIZE_EMULATOR, -1)}
             ));
         }
     }else {
@@ -147,5 +149,6 @@ bool DMG_CPU::hasInitialized() {
 };
 void DMG_CPU::unInitialize() {
     m_initialized = false;
+    m_emulation_begun = false;
     m_Memory.Full_Reset();
 };

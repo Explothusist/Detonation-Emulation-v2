@@ -30,9 +30,12 @@ Menu::Menu(std::string menu_title, std::vector<std::string> entries, std::vector
     m_menu_title{ menu_title },
     m_entries{ entries },
     m_entry_effects{ entry_effects },
-    m_entry_selected{ 0 }
+    m_entry_selected{ 0 },
+    m_entry_colors{ std::vector<EntryColor>(entries.size()) }
 {
-
+    for (int i = 0; i < static_cast<int>(m_entries.size()); i++) {
+        m_entry_colors[i] = COLOR_BLACK;
+    }
 };
 
 void Menu::drawSelf(DrawingContext* ctx, bool bind_next_key) {
@@ -61,19 +64,20 @@ void Menu::drawSelf(DrawingContext* ctx, bool bind_next_key) {
     for (int i = 0; i < static_cast<int>(m_entries.size()); i++) {
         if (i == m_entry_selected) {
             ctx->fill(160, 160, 160);
-            // ctx->rect(base_x+70, base_y+75+(i*45), 300, 42);
-            // int width = 20+ctx->measureTextWidth(m_entries[i]);
             ctx->rect(base_x+70, base_y+75+(i*45), 20+ctx->measureTextWidth(m_entries[i]), 42);
-
-            // if (bind_next_key) {
-            //     ctx->fill(50, 50, 50, 125);
-            //     ctx->rect(0, 0, base_x+70, full_y);
-            //     ctx->rect(base_x+70 + width, 0, full_x - (base_x+70 + width), full_y);
-            //     ctx->rect(base_x+70, 0, width, base_y+75+(i*45));
-            //     ctx->rect(base_x+70, base_y+75+(i*45) + 42, width, full_y - (base_y+75+(i*45) + 42));
-            // }
-            ctx->fill(50, 50, 50);
         }
+        switch (m_entry_colors[i]) {
+            case COLOR_BLACK:
+                ctx->fill(50, 50, 50);
+                break;
+            case COLOR_ORANGE:
+                ctx->fill(200, 100, 50);
+                break;
+            case COLOR_RED:
+                ctx->fill(200, 50, 50);
+                break;
+        }
+
         ctx->text(m_entries[i], base_x+80, base_y+80+(i*45));
     }
 
@@ -106,6 +110,15 @@ void Menu::setEntries(std::vector<std::string> entries) {
 };
 void Menu::setEffects(std::vector<EntryEffect> entry_effects) {
     m_entry_effects = entry_effects;
+};
+void Menu::setEntryColor(int entry, EntryColor new_color) {
+    if (entry == -1) {
+        entry = m_entry_selected;
+    }
+    m_entry_colors[entry] = new_color;
+};
+void Menu::setColors(std::vector<EntryColor> entry_colors) {
+    m_entry_colors = entry_colors;
 };
 
 
@@ -285,11 +298,15 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
         case EFFECT_SELECT_ROM_RELOAD_RECENT: { // Braces because the variable declaration
             std::string filepath = openROMFilePicker(getCtx()->getWindowHandle());
             if (filepath != "") {
-                addGameToRecent(filepath);
-                saveRecentGamesFile(m_recent_games);
-                reloadRecentGamesMenu(Recent_Menu);
                 m_rom = readROMFile(filepath);
-                return true; // Time to start emulation
+                if (m_rom != nullptr) {
+                    addGameToRecent(filepath);
+                    saveRecentGamesFile(m_recent_games);
+                    reloadRecentGamesMenu(Recent_Menu);
+                    return true; // Time to start emulation
+                }else {
+                    createPopup(Popup("ROM file could not be loaded.", {"Cancel"}, {EntryEffect(EFFECT_NONE, -1)}));
+                }
             } }
             break;
         case EFFECT_SET_KEYBIND:
@@ -337,11 +354,15 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
         case EFFECT_LOAD_RECENT_RELOAD_RECENT: { // Braces because the variable declaration
             std::string filepath = m_recent_games->at(effect.getArg());
             if (filepath != "") {
-                addGameToRecent(filepath);
-                saveRecentGamesFile(m_recent_games);
-                reloadRecentGamesMenu(Recent_Menu);
                 m_rom = readROMFile(filepath);
-                return true; // Time to start emulation
+                if (m_rom != nullptr) {
+                    addGameToRecent(filepath);
+                    saveRecentGamesFile(m_recent_games);
+                    reloadRecentGamesMenu(Recent_Menu);
+                    return true; // Time to start emulation
+                }else {
+                    createPopup(Popup("ROM file could not be loaded.", {"Cancel"}, {EntryEffect(EFFECT_NONE, -1)}));
+                }
             } }
             break;
         case EFFECT_BACK_TO_EMULATOR:
@@ -349,11 +370,17 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
         case EFFECT_RETURN_TO_MAIN:
             createPopup(Popup("Are you sure you want to return to the Main Menu?", {"Cancel", "Confirm"}, {EntryEffect(EFFECT_NONE, -1), EntryEffect(EFFECT_TO_MENU_UNINITIALIZE_EMULATOR, effect.getArg())}));
             break;
+        case EFFECT_ASK_LOAD_ANYWAY:
+            createPopup(Popup("Are you sure you want to load despite the warning?", {"Cancel", "Confirm"}, {EntryEffect(EFFECT_LOAD_ANYWAY, -1), EntryEffect(EFFECT_TO_MENU_UNINITIALIZE_EMULATOR, effect.getArg())}));
+            break;
         case EFFECT_LOAD_ANYWAY:
             return true;
         case EFFECT_TO_MENU_UNINITIALIZE_EMULATOR:
             m_cpu->unInitialize();
             switchToMenu(effect.getArg());
+            break;
+        case EFFECT_UNINITIALIZE_EMULATOR:
+            m_cpu->unInitialize();
             break;
     }
     return false; // Not time to start emulation
@@ -388,6 +415,11 @@ DrawingContext* Menu_Handler::getCtx() {
 void Menu_Handler::replaceKeyEntriesOnMenu(std::vector<std::string> new_keys, int menu) {
     for (int i = 0; i < static_cast<int>(new_keys.size()); i++) {
         m_menus[menu].replaceKeyEntry(i, new_keys[i]);
+    }
+};
+void Menu_Handler::setColorsOnMenu(std::vector<EntryColor> new_colors, int menu) {
+    for (int i = 0; i < static_cast<int>(new_colors.size()); i++) {
+        m_menus[menu].setEntryColor(i, new_colors[i]);
     }
 };
 void Menu_Handler::reloadRecentGamesMenu(int menu) {

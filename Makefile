@@ -1,54 +1,104 @@
-# make
-# make BUILD=debug
-# make BUILD=release
+# Makefile
+# Usage:
+#   make               (default debug build)
+#   make BUILD=release
+#   make CXX=g++       (or clang++)
+#   make CXX=cl        (MSVC)
+#   make clean
+#   make cleanAll
 
 BUILD ?= debug
+CXX   ?= g++
+BUILD_DIR ?= build
 
-SDL_CFLAGS = -ISDL-Drawing-Library\x86_64-w64-mingw32\include
-SDL_LDFLAGS = -LSDL-Drawing-Library\x86_64-w64-mingw32\lib -lSDL3 -lSDL3_image -lSDL3_ttf
-LDFLAGS = -lcomdlg32
-DRAWING_LIB_OBJS = SDL-Drawing-Library\DrawingContext.o SDL-Drawing-Library\WindowHandler.o
-INTERFACE_OBJS = menus\MenuHandler.o
-EMULATOR_OBJS = emulator\cpu.o emulator\memory.o
-HELPER_OBJS = $(INTERFACE_OBJS) $(EMULATOR_OBJS) filehandle.o utils.o
-
-COMMON_FLAGS = -Wall -Wextra -std=c++17
-DEBUG_FLAGS  = -O0 -g -Wswitch -Wswitch-enum -Wimplicit-fallthrough
-RELEASE_FLAGS = -O2 -march=native
-
-ifeq ($(BUILD),debug)
-    CFLAGS = $(COMMON_FLAGS) $(DEBUG_FLAGS)
-    TARGET = main.exe
+# --- Platform-specific commands ---
+ifeq ($(OS),Windows_NT)
+	RM = del /Q
+	RMDIR = rmdir /S /Q
 else
-    CFLAGS = $(COMMON_FLAGS) $(RELEASE_FLAGS)
-    TARGET = DetonationEmulation.exe
+	RM = rm -f
+	RMDIR = rm -rf
 endif
 
+# --- SDL paths ---
+SDL_CFLAGS  = -ISDL-Drawing-Library/x86_64-w64-mingw32/include
+SDL_LDFLAGS = -LSDL-Drawing-Library/x86_64-w64-mingw32/lib
+SDL_LDLIBS  = -lSDL3 -lSDL3_image -lSDL3_ttf
+
+# --- Source files ---
+DRAWING_LIB_SRCS = SDL-Drawing-Library/DrawingContext.cpp SDL-Drawing-Library/WindowHandler.cpp
+INTERFACE_SRCS = menus/MenuHandler.cpp
+EMULATOR_SRCS  = emulator/cpu.cpp emulator/memory.cpp
+HELPER_SRCS    = $(INTERFACE_SRCS) $(EMULATOR_SRCS) filehandle.cpp utils.cpp
+
+# --- Object files in build/ ---
+DRAWING_LIB_OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(DRAWING_LIB_SRCS))
+HELPER_OBJS      = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(HELPER_SRCS))
+
+# --- Flags ---
+CPPFLAGS += $(SDL_CFLAGS)
+
+ifeq ($(CXX),cl)
+	COMMON_CXXFLAGS  = /std:c++17 /W4
+	DEBUG_CXXFLAGS   = /Od /Zi
+	RELEASE_CXXFLAGS = /O2
+	LDFLAGS         += /link
+else
+	COMMON_CXXFLAGS  = -Wall -Wextra -std=c++17
+	DEBUG_CXXFLAGS   = -O0 -g -Wswitch -Wswitch-enum -Wimplicit-fallthrough
+	RELEASE_CXXFLAGS = -O2 -march=native
+
+	# Auto dependency generation (GCC/Clang)
+	CXXFLAGS += -MMD -MP
+endif
+
+ifeq ($(BUILD),debug)
+	CXXFLAGS += $(COMMON_CXXFLAGS) $(DEBUG_CXXFLAGS)
+	TARGET    = main.exe
+else
+	CXXFLAGS += $(COMMON_CXXFLAGS) $(RELEASE_CXXFLAGS)
+	TARGET    = DetonationEmulation.exe
+endif
+
+LDFLAGS += $(SDL_LDFLAGS)
+LDLIBS  += $(SDL_LDLIBS) -lcomdlg32
+
+# --- Main target ---
 all: $(TARGET)
 
-$(TARGET): main.cpp $(HELPER_OBJS) Drawing-Library
-	g++ $(CFLAGS) -o $(TARGET) main.cpp $(HELPER_OBJS) $(DRAWING_LIB_OBJS) $(SDL_CFLAGS) $(SDL_LDFLAGS) $(LDFLAGS)
+$(TARGET): main.cpp $(HELPER_OBJS) $(DRAWING_LIB_OBJS) Drawing-Library
+ifeq ($(OS),Windows_NT)
+	@if not exist "$(BUILD_DIR)" mkdir "$(BUILD_DIR)"
+else
+	@mkdir -p $(BUILD_DIR)
+endif
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ main.cpp $(HELPER_OBJS) $(DRAWING_LIB_OBJS) $(LDLIBS)
 
-filehandle.o: filehandle.cpp
-	g++ $(CFLAGS) -c filehandle.cpp -o filehandle.o
+# --- Pattern rule for object files ---
+$(BUILD_DIR)/%.o: %.cpp
+ifeq ($(OS),Windows_NT)
+	@if not exist "$(dir $@)" mkdir "$(dir $@)"
+else
+	@mkdir -p $(dir $@)
+endif
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c $< -o $@
 
-utils.o: utils.cpp
-	g++ $(CFLAGS) -c utils.cpp -o utils.o $(SDL_CFLAGS)
-
-menus\MenuHandler.o: menus\MenuHandler.cpp
-	g++ $(CFLAGS) -c menus\MenuHandler.cpp -o menus\MenuHandler.o $(SDL_CFLAGS)
-
-emulator\cpu.o: emulator\cpu.cpp
-	g++ $(CFLAGS) -c emulator\cpu.cpp -o emulator\cpu.o $(SDL_CFLAGS)
-
-emulator\memory.o: emulator\memory.cpp
-	g++ $(CFLAGS) -c emulator\memory.cpp -o emulator\memory.o
-
+# --- Drawing library ---
 Drawing-Library:
 	$(MAKE) -C SDL-Drawing-Library
 
+# --- Include auto-generated dependency files ---
+-include $(HELPER_OBJS:.o=.d)
+
+# --- Clean ---
 clean:
-	del $(TARGET)
+	$(RM) $(TARGET)
 
 cleanAll:
-	del $(TARGET) $(HELPER_OBJS) $(DRAWING_LIB_OBJS)
+ifeq ($(OS),Windows_NT)
+	-@$(RMDIR) "$(BUILD_DIR)"
+	-@$(RM) $(TARGET)
+else
+	$(RMDIR) $(BUILD_DIR)
+	$(RM) $(TARGET)
+endif

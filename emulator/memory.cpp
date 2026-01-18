@@ -144,6 +144,15 @@ Memory_Handler::Memory_Handler():
     m_licensee{ "" },
     m_passes_checksum{ false },
     m_valid_logo{ false },
+    
+    m_romname_color{ COLOR_BLACK },
+    m_cart_name_color{ COLOR_BLACK },
+    m_rom_size_name_color{ COLOR_BLACK },
+    m_ram_size_name_color{ COLOR_BLACK },
+    m_is_cgb_cart_color{ COLOR_BLACK },
+    m_licensee_color{ COLOR_BLACK},
+    m_passes_checksum_color{ COLOR_BLACK },
+    m_valid_logo_color{ COLOR_BLACK },
 
     m_mbc_type{ 0 },
     m_cart_has_ram{ false },
@@ -193,6 +202,15 @@ void Memory_Handler::Full_Reset() { // This is extreme...
     m_licensee = "";
     m_passes_checksum = false;
     m_valid_logo = false;
+
+    m_romname_color = COLOR_BLACK;
+    m_cart_name_color = COLOR_BLACK;
+    m_rom_size_name_color = COLOR_BLACK;
+    m_ram_size_name_color = COLOR_BLACK;
+    m_is_cgb_cart_color = COLOR_BLACK;
+    m_licensee_color = COLOR_BLACK;
+    m_passes_checksum_color = COLOR_BLACK;
+    m_valid_logo_color = COLOR_BLACK;
 
     m_mbc_type = 0;
     m_cart_has_ram = false;
@@ -262,6 +280,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_warning == "") {
                 m_first_warning = "Cartridge Type 'ROM + RAM' Never Used In Licensed Games";
             }
+            m_cart_name_color = COLOR_ORANGE;
             // m_has_load_error = true;
             m_has_load_warning = true;
             m_cart_name = "ROM + RAM (Unused Type)";
@@ -273,6 +292,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_warning == "") {
                 m_first_warning = "Cartridge Type 'ROM + RAM' Never Used In Licensed Games";
             }
+            m_cart_name_color = COLOR_ORANGE;
             // m_has_load_error = true;
             m_has_load_warning = true;
             m_cart_name = "ROM + RAM + Battery (Unused Type)";
@@ -286,6 +306,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'MMM01'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
         case 0x0c: // MMM01 + RAM
@@ -294,6 +315,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'MMM01'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
         case 0x0d: // MMM01 + RAM + Battery
@@ -302,6 +324,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'MMM01'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
         case 0x0f: // MBC3 + Timer + Battery
@@ -381,6 +404,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'Pocket Camera'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
         case 0xfd: // Bandai Tama5
@@ -389,6 +413,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'Bandai Tama5'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
         case 0xfe: // HuC3
@@ -397,6 +422,7 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'HuC3'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
         case 0xff: // HuC1 + RAM + Battery
@@ -405,13 +431,16 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type) {
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'HuC1'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
         default:
+            m_cart_name = "Unknown";
             printf("ERROR: Memory Setup: Cartridge Uses Unrecognized Type '%i'\n", cart_type);
             if (m_first_error == "") {
                 m_first_error = "Unsupported Cartridge Type 'Unknown'";
             }
+            m_cart_name_color = COLOR_RED;
             m_has_load_error = true;
             break;
     }
@@ -459,29 +488,32 @@ void Memory_Handler::interpret_rom_size_type(uint8_t rom_size) {
             if (m_first_warning == "") {
                 m_first_warning = "ROM Size '72 banks' Not Used In Licensed Games";
             }
+            m_rom_size_name_color = COLOR_ORANGE;
             // m_has_load_error = true;
             m_has_load_warning = true;
             m_num_rom_banks = 72;
-            m_rom_size_name = "72 ROM Banks, 1.1 MiB";
+            m_rom_size_name = "72 ROM Banks, 1.1 MiB (Unused Type)";
             break;
         case 0x53: // Only listed in unofficial docs
             printf("WARNING: Memory Setup: Uses Unused Cartridge ROM Size '80 banks'\n");
             if (m_first_warning == "") {
                 m_first_warning = "ROM Size '80 banks' Not Used In Licensed Games";
             }
+            m_rom_size_name_color = COLOR_ORANGE;
             // m_has_load_error = true;
             m_has_load_warning = true;
             m_num_rom_banks = 80;
-            m_rom_size_name = "80 ROM Banks, 1.2 MiB";
+            m_rom_size_name = "80 ROM Banks, 1.2 MiB (Unused Type)";
             break;
         case 0x54: // Only listed in unofficial docs
             printf("WARNING: Memory Setup: Uses Unused Cartridge ROM Size '96 banks'\n");
             if (m_first_warning == "") {
                 m_first_warning = "ROM Size '96 banks' Not Used In Licensed Games";
             }
+            m_rom_size_name_color = COLOR_ORANGE;
             // m_has_load_error = true;
             m_has_load_warning = true;
-            m_rom_size_name = "96 ROM Banks, 1.5 MiB";
+            m_rom_size_name = "96 ROM Banks, 1.5 MiB (Unused Type)";
             m_num_rom_banks = 96;
             break;
         default:
@@ -489,6 +521,8 @@ void Memory_Handler::interpret_rom_size_type(uint8_t rom_size) {
             if (m_first_error == "") {
                 m_first_error = "Cartridge ROM Size Unrecognized";
             }
+            m_rom_size_name_color = COLOR_RED;
+            m_rom_size_name = "Unknown";
             m_has_load_error = true;
             break;
     }
@@ -504,10 +538,11 @@ void Memory_Handler::interpret_ram_size_type(uint8_t ram_size) {
             if (m_first_warning == "") {
                 m_first_warning = "RAM Size '2 KiB' Not Used In Licensed Games";
             }
+            m_ram_size_name_color = COLOR_ORANGE;
             // m_has_load_error = true;
             m_has_load_warning = true;
             m_num_rom_banks = 1;
-            m_ram_size_name = "1 Partial RAM Bank, 2 KiB";
+            m_ram_size_name = "(1) RAM Bank, 2 KiB (Unused Type)";
             break;
         case 0x02:
             m_num_rom_banks = 1;
@@ -530,6 +565,8 @@ void Memory_Handler::interpret_ram_size_type(uint8_t ram_size) {
             if (m_first_error == "") {
                 m_first_error = "Cartridge RAM Size Unrecognized";
             }
+            m_ram_size_name_color = COLOR_RED;
+            m_ram_size_name = "Unknown";
             m_has_load_error = true;
             break;
     }
@@ -765,10 +802,11 @@ void Memory_Handler::Setup(std::vector<uint8_t>* rom, bool use_boot_rom) {
 
     m_in_boot_rom_internal = use_boot_rom;
 
+    // Reading ROM Header
     uint8_t cgb_flag = rom->at(0x0143); // Part of title in earlier models
     uint8_t new_licensee_code_1 = rom->at(0x0144); // Part of title in earlier models
     uint8_t new_licensee_code_2 = rom->at(0x0145);
-    uint8_t cart_type = rom->at(0x0147); // Reading ROM Header
+    uint8_t cart_type = rom->at(0x0147);
     uint8_t rom_size = rom->at(0x0148);
     uint8_t ram_size = rom->at(0x0149);
     uint8_t old_licensee_code = rom->at(0x014b);
@@ -781,6 +819,7 @@ void Memory_Handler::Setup(std::vector<uint8_t>* rom, bool use_boot_rom) {
         if (m_first_warning == "") {
             m_first_warning = "CGB Cartridge In Compatability Mode";
         }
+        m_is_cgb_cart_color = COLOR_ORANGE;
         // m_has_load_error = true;
         m_has_load_warning = true;
         m_is_cgb_cart = "CGB Cartridge with Compatability";
@@ -789,8 +828,9 @@ void Memory_Handler::Setup(std::vector<uint8_t>* rom, bool use_boot_rom) {
         if (m_first_error == "") {
             m_first_error = "CGB Cartridge, Cannot Be Run";
         }
+        m_is_cgb_cart_color = COLOR_RED;
         m_has_load_error = true;
-        m_is_cgb_cart = "Uncompatable CGB Cartridge";
+        m_is_cgb_cart = "Uncompatible CGB Cartridge";
     }else {
         m_is_cgb_cart = "DMG Cartridge";
     }
@@ -805,11 +845,12 @@ void Memory_Handler::Setup(std::vector<uint8_t>* rom, bool use_boot_rom) {
         m_passes_checksum = true;
     }else {
         printf("WARNING: Memory Setup: Header Checksum Failed\n");
-        if (m_first_warning == "") {
-            m_first_warning = "Header Checksum Failed";
-        }
-        // m_has_load_error = true;
-        m_has_load_warning = true;
+        // if (m_first_warning == "") {
+        //     m_first_warning = "Header Checksum Failed";
+        // }
+        m_passes_checksum_color = COLOR_ORANGE;
+        // // m_has_load_error = true;
+        // m_has_load_warning = true;
         m_passes_checksum = false;
     }
 
@@ -828,6 +869,7 @@ void Memory_Handler::Setup(std::vector<uint8_t>* rom, bool use_boot_rom) {
         if (m_first_warning == "") {
             m_first_warning = "Nintendo Logo Does Not Match";
         }
+        m_valid_logo_color = COLOR_ORANGE;
         // m_has_load_error = true;
         m_has_load_warning = true;
         m_valid_logo = false;
@@ -1014,5 +1056,26 @@ std::string Memory_Handler::getFirstError() {
 };
 
 std::vector<std::string> Memory_Handler::getCartDetails() {
-    return { m_romname, m_cart_name, m_rom_size_name, m_ram_size_name, m_is_cgb_cart, m_licensee, m_passes_checksum ? "Passed" : "Failed", m_valid_logo ? "Passed" : "Failed" };
+    return { 
+        m_romname, 
+        m_cart_name, 
+        m_rom_size_name, 
+        m_ram_size_name, 
+        m_is_cgb_cart, 
+        m_licensee, 
+        m_passes_checksum ? "Passed" : "Failed", 
+        m_valid_logo ? "Passed" : "Failed" 
+    };
+};
+std::vector<EntryColor> Memory_Handler::getCartDetailColors() {
+    return { 
+        m_romname_color, 
+        m_cart_name_color, 
+        m_rom_size_name_color, 
+        m_ram_size_name_color, 
+        m_is_cgb_cart_color, 
+        m_licensee_color, 
+        m_passes_checksum_color, 
+        m_valid_logo_color
+    };
 };
