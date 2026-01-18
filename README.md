@@ -22,11 +22,11 @@ To build on Windows, I recommend downloading GNUWin32. See below for instruction
 
 "make is a GNU command, so the only way you can get it on Windows is installing a Windows version like the one provided by GNUWin32. Anyway, there are several options for getting that:
 
-    - Directly download from Make for Windows  
-    - Using Chocolatey. First, you need to install this package manager. Once installed, you simply need to install make (you may need to run it in an elevated/administrator command prompt):  
-        - choco install make  
-    - Another recommended option is installing a Windows Subsystem for Linux (WSL or WSL 2), so you'll have a Linux distribution of your choice embedded in Windows 10, where you'll be able to install make, gcc, and all the tools you need to build C programs.  
-    - For older Windows versions (Microsoft Windows 2000, Windows XP, Windows Server 2003, Windows Vista, Windows Server 2008, or Windows 7 with msvcrt.dll) you can use GnuWin32.
+- Directly download from Make for Windows  
+- Using Chocolatey. First, you need to install this package manager. Once installed, you simply need to install make (you may need to run it in an elevated/administrator command prompt):  
+    - choco install make  
+- Another recommended option is installing a Windows Subsystem for Linux (WSL or WSL 2), so you'll have a Linux distribution of your choice embedded in Windows 10, where you'll be able to install make, gcc, and all the tools you need to build C programs.  
+- For older Windows versions (Microsoft Windows 2000, Windows XP, Windows Server 2003, Windows Vista, Windows Server 2008, or Windows 7 with msvcrt.dll) you can use GnuWin32.
 
 An outdated alternative was MinGW, but the project seems to be abandoned, so it's better to go for one of the previous choices."
 
@@ -95,15 +95,15 @@ Windows SDK installed
 
 4. Add include directories:
 
-    `SDL-Drawing-Library/SDL3/include`  
-    `SDL-Drawing-Library/SDL3_image/include`  
-    `SDL-Drawing-Library/SDL3_ttf/include`  
+    SDL-Drawing-Library/SDL3/include
+    SDL-Drawing-Library/SDL3_image/include
+    SDL-Drawing-Library/SDL3_ttf/include
 
 5. Add library directories:
 
-    `SDL-Drawing-Library/SDL3/lib/x64`  
-    `SDL-Drawing-Library/SDL3_image/lib/x64`  
-    `SDL-Drawing-Library/SDL3_ttf/lib/x64`  
+    SDL-Drawing-Library/SDL3/lib/x64
+    SDL-Drawing-Library/SDL3_image/lib/x64
+    SDL-Drawing-Library/SDL3_ttf/lib/x64
 
 6. Link against the following libraries: `SDL3.lib`, `SDL3_image.lib`, `SDL3_ttf.lib`
 7. Build the project and run `DetonationEmulation.exe`
@@ -118,7 +118,7 @@ If you are using **`clang-cl`**, ensure that:
 
 Example (simplified):
 
-    `clang-cl /std:c++20 *.cpp SDL3.lib SDL3_image.lib SDL3_ttf.lib`
+    clang-cl /std:c++20 *.cpp SDL3.lib SDL3_image.lib SDL3_ttf.lib
 
 ## Links
 
