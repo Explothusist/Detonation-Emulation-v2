@@ -11,7 +11,7 @@
 class DrawingContext;
 class Emulator_Options;
 union SDL_Event;
-class DMG_CPU;
+class DMG_Emulator;
 
 class EntryEffect {
     public:
@@ -90,7 +90,7 @@ class Menu_Handler {
         void reloadRecentGamesMenu(int menu);
 
         DrawingContext* getCtx();
-        void setCPU(DMG_CPU* m_cpu);
+        void setEmulator(DMG_Emulator* m_cpu);
     private:
         std::vector<Menu> m_menus;
         Popup m_popup;
@@ -99,7 +99,7 @@ class Menu_Handler {
         int m_last_menu;
 
         DrawingContext* m_ctx;
-        DMG_CPU* m_cpu;
+        DMG_Emulator* m_emulator;
         std::vector<std::string>* m_recent_games;
         std::vector<uint32_t>* m_keybindings;
         std::vector<uint32_t>* m_temp_keybindings;

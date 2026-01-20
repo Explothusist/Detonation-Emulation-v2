@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <vector>
 #include "memory.h"
+#include "ppu.h"
+#include "apu.h"
+#include "opcodes.h"
 #include "../utils.h"
 
 class Menu_Handler;
@@ -11,27 +14,33 @@ class DrawingContext;
 
 class DMG_CPU {
     public:
-        DMG_CPU(DrawingContext* ctx, Menu_Handler* menus, Emulator_Options* options, EmulatorState &state);
+        DMG_CPU();
+        
+        Cart_Details Trigger_InitializeAll(std::vector<uint8_t>* rom, bool use_boot_rom);
+        void Trigger_PowerCycle(); // Full Reset on everything, including ROM
+        void Trigger_ResetButton(); // Resets all RAM, but keeps ROM
+        void PowerCycle();
+        void Reset(); // WORKING HERE
 
-        void Start_Emulation(std::vector<uint8_t>* rom);
-        void Resume_Emulation();
+        void Initialize(bool use_boot_rom);
 
-        void drawSelf(); // This is mortally incorrect
+        Opcode* parseOpcode(uint8_t opcode);
+        void runMCycle();
+        void runTCycle();
 
-        bool hasInitialized();
-        void unInitialize();
+        void callAbort();
 
-    private:
         Memory_Handler m_Memory;
         Register_Handler m_regs;
+        DMG_PPU m_ppu;
+        DMG_APU m_apu;
+    private:
+        int m_cycle_count;
 
-        DrawingContext* m_ctx;
-        Menu_Handler* m_menus;
-        Emulator_Options* m_options;
-        EmulatorState &m_state;
+        Opcode* m_curr_opcode;
+        int m_curr_opcode_mcycle;
 
-        bool m_initialized;
-        bool m_emulation_begun;
+        bool m_abort;
 };
 
 #endif

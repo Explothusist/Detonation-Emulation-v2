@@ -13,7 +13,8 @@ enum class Reg_u8 {
     D, E,
     H, L,
     SP_H, SP_L,
-    PC_H, PC_L
+    PC_H, PC_L,
+    temp
 };
 enum class Reg_u16 {
     AF,
@@ -21,7 +22,8 @@ enum class Reg_u16 {
     DE,
     HL,
     SP,
-    PC
+    PC,
+    temp16
 };
 enum class Reg_flag {
     Z, N, H, C
@@ -49,23 +51,14 @@ class Register_Handler {
         uint8_t H;
         uint16_t SP; // Stack Pointer
         uint16_t PC; // Program Counter
+
+        uint8_t temp; // For use by opcodes
+        uint16_t temp16;
 };
 
-
-class Memory_Handler {
+class Cart_Details {
     public:
-        Memory_Handler();
-
-        void Full_Reset(); // Use with caution, wipes ROM as well
-        void Reset(); // Only resets RAM (same as reset button)
-
-        void Setup(std::vector<uint8_t>* rom, bool use_boot_rom);
-
-        uint8_t Read(uint16_t address);
-        void Write(uint16_t address, uint8_t data);
-        uint8_t _Get(uint16_t address); // For setup/internal, raw output without checks
-        void _Set(uint16_t address, uint8_t data); // For setup/internal, raw input without checks
-        uint8_t PC_Eat_Byte(Register_Handler &regs);
+        Cart_Details();
 
         bool hadLoadError();
         bool hadLoadWarning();
@@ -74,31 +67,10 @@ class Memory_Handler {
         std::vector<std::string> getCartDetails();
         std::vector<EntryColor> getCartDetailColors();
 
-    private:
-        // uint8_t X0000_ROM_STATIC[0x4000]; // (Switchable) // Reference m_RomBanks directly
-        // uint8_t X4000_ROM_BANK[0x4000]; // Switchable // Reference m_RomBanks directly
-        uint8_t X8000_VRAM[0x2000];
-        // uint8_t XA000_EXT_RAM[0x2000]; // (Switchable) // Reference m_RamBanks directly
-        uint8_t XC000_WORK_RAM[0x2000]; // 2nd half only a bank in CGB
-        // uint8_t XE000_ECHO_RAM[0x1e00]; // Echo of 0xC000 - 0xDDFF
-        uint8_t XFE00_OAM[0xa0];
-        // uint8_t XFEA0_NOT_USABLE[0x60]; // Use prohibited and not usable
-        uint8_t XFF00_IO_REGS[0x80]; // More callbacks, less array?
-        uint8_t XFF80_HRAM[0x7f];
-        uint8_t XFFFF_IE;
-
-        uint8_t m_RomBanks[512][0x4000];
-        uint8_t m_RamBanks[16][0x2000];
-
-        bool m_in_boot_rom_internal;
         bool m_has_load_error;
         bool m_has_load_warning;
         std::string m_first_error;
         std::string m_first_warning;
-
-        int m_rom_bank_1; // Only switchable on later cartridges
-        int m_rom_bank_2;
-        int m_ram_bank;
 
         std::string m_romname; // For display only
         std::string m_cart_name;
@@ -125,11 +97,58 @@ class Memory_Handler {
 
         int m_num_rom_banks;
         int m_num_ram_banks;
+};
 
-        void interpret_cartridge_type(uint8_t cart_type);
-        void interpret_rom_size_type(uint8_t rom_size);
-        void interpret_ram_size_type(uint8_t ram_size);
-        void interpret_licensee_code(uint8_t old_code, uint8_t new_code_1, uint8_t new_code_2);
+
+class Memory_Handler {
+    public:
+        Memory_Handler();
+
+        void PowerCycle(); // Use with caution, wipes ROM as well
+        void Reset(); // Only resets RAM (same as reset button)
+
+        Cart_Details Initialize(std::vector<uint8_t>* rom, bool use_boot_rom);
+
+        uint8_t Read(uint16_t address);
+        void Write(uint16_t address, uint8_t data);
+        uint8_t _Get(uint16_t address); // For setup/internal, raw output without checks
+        void _Set(uint16_t address, uint8_t data); // For setup/internal, raw input without checks
+        uint8_t PC_Eat_Byte(Register_Handler &regs);
+
+    private:
+        // uint8_t X0000_ROM_STATIC[0x4000]; // (Switchable) // Reference m_RomBanks directly
+        // uint8_t X4000_ROM_BANK[0x4000]; // Switchable // Reference m_RomBanks directly
+        uint8_t X8000_VRAM[0x2000];
+        // uint8_t XA000_EXT_RAM[0x2000]; // (Switchable) // Reference m_RamBanks directly
+        uint8_t XC000_WORK_RAM[0x2000]; // 2nd half only a bank in CGB
+        // uint8_t XE000_ECHO_RAM[0x1e00]; // Echo of 0xC000 - 0xDDFF
+        uint8_t XFE00_OAM[0xa0];
+        // uint8_t XFEA0_NOT_USABLE[0x60]; // Use prohibited and not usable
+        uint8_t XFF00_IO_REGS[0x80]; // More callbacks, less array?
+        uint8_t XFF80_HRAM[0x7f];
+        uint8_t XFFFF_IE;
+
+        uint8_t m_RomBanks[512][0x4000];
+        uint8_t m_RamBanks[16][0x2000];
+
+        bool m_in_boot_rom_internal;
+        int m_rom_bank_1; // Only switchable on later cartridges
+        int m_rom_bank_2;
+        int m_ram_bank;
+
+        int m_mbc_type; // Only emulate MBC cartridges, for now
+        bool m_cart_has_ram;
+        bool m_cart_has_battery;
+        bool m_cart_has_timer;
+        bool m_cart_has_rumble;
+
+        int m_num_rom_banks;
+        int m_num_ram_banks;
+
+        void interpret_cartridge_type(uint8_t cart_type, Cart_Details &cart_details);
+        void interpret_rom_size_type(uint8_t rom_size, Cart_Details &cart_details);
+        void interpret_ram_size_type(uint8_t ram_size, Cart_Details &cart_details);
+        void interpret_licensee_code(uint8_t old_code, uint8_t new_code_1, uint8_t new_code_2, Cart_Details &cart_details);
         std::string readROMName(std::vector<uint8_t>* rom);
 };
 

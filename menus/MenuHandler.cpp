@@ -3,7 +3,7 @@
 
 #include "../filehandle.h"
 #include "../SDL-Drawing-Library/DrawingContext.h"
-#include "../emulator/cpu.h"
+#include "../emulator/emulator_frontend.h"
 #include "../utils.h"
 
 EntryEffect::EntryEffect():
@@ -192,7 +192,7 @@ Menu_Handler::Menu_Handler(DrawingContext* ctx, std::vector<std::string>* recent
     m_popup_active{ false },
     m_menu_selected{ 0 },
     m_ctx{ ctx },
-    m_cpu{ nullptr },
+    m_emulator{ nullptr },
     m_recent_games{ recent_games },
     m_keybindings{ keybindings },
     m_temp_keybindings{ temp_keybindings },
@@ -376,11 +376,11 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
         case EFFECT_LOAD_ANYWAY:
             return true;
         case EFFECT_TO_MENU_UNINITIALIZE_EMULATOR:
-            m_cpu->unInitialize();
+            m_emulator->unInitialize();
             switchToMenu(effect.getArg());
             break;
         case EFFECT_UNINITIALIZE_EMULATOR:
-            m_cpu->unInitialize();
+            m_emulator->unInitialize();
             break;
     }
     return false; // Not time to start emulation
@@ -437,9 +437,8 @@ void Menu_Handler::reloadRecentGamesMenu(int menu) {
     m_menus[menu].setSelected(0);
     m_menus[menu].setEntries(recent_entries);
     m_menus[menu].setEffects(recent_effects);
-    printf("Menu '%i' Modified", menu);
 };
 
-void Menu_Handler::setCPU(DMG_CPU* cpu) {
-    m_cpu = cpu;
+void Menu_Handler::setEmulator(DMG_Emulator* emulator) {
+    m_emulator = emulator;
 };

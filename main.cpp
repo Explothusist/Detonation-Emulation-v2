@@ -6,7 +6,7 @@
 #include <filesystem>
 
 #include "menus/MenuHandler.h"
-#include "emulator/cpu.h"
+#include "emulator/emulator_frontend.h"
 #include "filehandle.h"
 #include "utils.h"
 #include "SDL-Drawing-Library/DrawingContext.h"
@@ -133,18 +133,18 @@ int main() {
 
     Emulator_Options* m_options{ readOptionsFile() };
     
-    SDL_Log("COMPLETE: Initialization: Emulator Data Retreived");
+    printf("COMPLETE: Initialization: Emulator Data Retreived\n");
 
     DrawingContext* m_ctx{ new DrawingContext("Detonation Emulation") };
 
     if (m_ctx->init() != 0) {
-        SDL_Log("ERROR: Main: Window.init() Failed");
+        printf("ERROR: Main: Window.init() Failed\n");
     }else {
 
         EmulatorState m_state{ State_InMenu };
         Menu_Handler* m_menus{ new Menu_Handler(m_ctx, m_recent_games, m_keybindings, m_temp_keybindings, m_options) };
-        DMG_CPU* m_cpu{ new DMG_CPU(m_ctx, m_menus, m_options, m_state) };
-        m_menus->setCPU(m_cpu);
+        DMG_Emulator* m_emulator{ new DMG_Emulator(m_ctx, m_menus, m_options, m_state) };
+        m_menus->setEmulator(m_emulator);
         setupMenus(m_menus, m_recent_games, m_keybindings, m_options);
 
         bool quit{ false };
@@ -155,7 +155,7 @@ int main() {
         Uint64 ticksNS{ 0 };
         Uint64 nextFrameNS{ SDL_GetTicksNS() };
 
-        SDL_Log("COMPLETE: Initialization: Beginning Main Loop");
+        printf("COMPLETE: Initialization: Beginning Main Loop\n");
 
         // Do Setup things here:
         m_ctx->loadFont("fonts/8bitOperatorPlus-Regular.ttf");
@@ -164,7 +164,7 @@ int main() {
         // Loading Initial Screen
 
         while (!quit) {
-            // SDL_Log("Ticks : %s, Next Frame : %s", tickNS, nextFrameNS);
+            // printf("Ticks : %s, Next Frame : %s\n", tickNS, nextFrameNS);
 
             ticksNS = SDL_GetTicksNS();
             while (ticksNS > nextFrameNS) {
@@ -181,10 +181,10 @@ int main() {
                             case State_InMenu: {
                                 bool begin_emulation = m_menus->processEvent(&event);
                                 if (begin_emulation) {
-                                    if (!m_cpu->hasInitialized()) {
-                                        m_cpu->Start_Emulation(m_menus->getROM());
+                                    if (!m_emulator->hasInitialized()) {
+                                        m_emulator->Start_Emulation(m_menus->getROM());
                                     }else {
-                                        m_cpu->Resume_Emulation();
+                                        m_emulator->Resume_Emulation();
                                     }
                                 } }
                                 break;
@@ -199,32 +199,32 @@ int main() {
                         m_menus->drawSelf();
                         break;
                     case State_InEmulator:
-                        m_cpu->drawSelf(); // This is wrong and will be corrected later
+                        m_emulator->drawSelf(); // This is wrong and will be corrected later
                         break;
                 }
 
                 ticksNS = SDL_GetTicksNS();
             }
 
-            // SDL_Log("Delay : %s", (ticksNS - nextFrameNS));
+            // printf("Delay : %s\n", (ticksNS - nextFrameNS));
             SDL_DelayNS(nextFrameNS - ticksNS);
         }
 
         // DESTROY THINGS!
         delete m_menus;
         m_menus = nullptr;
-        delete m_cpu;
-        m_cpu = nullptr;
+        delete m_emulator;
+        m_emulator = nullptr;
     }
 
     // DESTROY THINGS!
-    SDL_Log("EXITING: Program: Destroying Objects");
+    printf("EXITING: Program: Destroying Objects\n");
     delete m_recent_games;
     m_recent_games = nullptr;
     delete m_ctx;
     m_ctx = nullptr;
     
 
-    SDL_Log("EXIT");
+    printf("EXIT\n");
     return 0;
 };
