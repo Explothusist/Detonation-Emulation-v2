@@ -34,7 +34,9 @@ Register_Handler::Register_Handler():
         case Reg_u8::SP_L: return (SP & 0xff);
         case Reg_u8::PC_H: return (PC >> 8);
         case Reg_u8::PC_L: return (PC & 0xff);
-        case Reg_u8::temp: return temp;
+        case Reg_u8::WZ_H: return (WZ >> 8);
+        case Reg_u8::WZ_L: return (WZ & 0xff);
+        // case Reg_u8::temp: return temp;
     }
     return 0;
 };
@@ -52,7 +54,9 @@ void Register_Handler::set(Reg_u8 reg, uint8_t value) {
         case Reg_u8::SP_L: SP = ((SP & 0xff00) | value); break;
         case Reg_u8::PC_H: PC = ((PC & 0x00ff) | (uint16_t(value) << 8)); break;
         case Reg_u8::PC_L: PC = ((PC & 0xff00) | value); break;
-        case Reg_u8::temp: temp = value; break;
+        case Reg_u8::WZ_H: WZ = ((WZ & 0x00ff) | (uint16_t(value) << 8)); break;
+        case Reg_u8::WZ_L: WZ = ((WZ & 0xff00) | value); break;
+        // case Reg_u8::temp: temp = value; break;
     }
 };
 [[nodiscard]] uint16_t Register_Handler::get(Reg_u16 reg) const {
@@ -63,7 +67,8 @@ void Register_Handler::set(Reg_u8 reg, uint8_t value) {
         case Reg_u16::HL: return ((uint16_t(H) << 8) | L);
         case Reg_u16::SP: return (SP);
         case Reg_u16::PC: return (PC);
-        case Reg_u16::temp16: return (temp16);
+        case Reg_u16::WZ: return (WZ);
+        // case Reg_u16::temp16: return (temp16);
     }
     return 0;
 };
@@ -75,26 +80,52 @@ void Register_Handler::set(Reg_u16 reg, uint16_t value) {
         case Reg_u16::HL: H = (value >> 8); L = value & 0xff; break;
         case Reg_u16::SP: SP = value; break;
         case Reg_u16::PC: PC = value; break;
-        case Reg_u16::temp16: temp16 = value; break;
+        case Reg_u16::WZ: WZ = value; break;
+        // case Reg_u16::temp16: temp16 = value; break;
     }
 };
 [[nodiscard]] bool Register_Handler::get(Reg_flag reg) const {
     switch (reg) {
-        case Reg_flag::Z: return ((F >> 7) & 1);
-        case Reg_flag::N: return ((F >> 6) & 1);
-        case Reg_flag::H: return ((F >> 5) & 1);
-        case Reg_flag::C: return ((F >> 4) & 1);
+        case Reg_flag::Z: return bool((F >> 7) & 1);
+        case Reg_flag::N: return bool((F >> 6) & 1);
+        case Reg_flag::H: return bool((F >> 5) & 1);
+        case Reg_flag::C: return bool((F >> 4) & 1);
+        case Reg_flag::NZ: return !bool((F >> 7) & 1);
+        case Reg_flag::NN: return !bool((F >> 6) & 1);
+        case Reg_flag::NH: return !bool((F >> 5) & 1);
+        case Reg_flag::NC: return !bool((F >> 4) & 1);
     }
-    return 0;
+    return false;
 };
 void Register_Handler::set(Reg_flag reg, bool value) {
     switch (reg) {
-        case Reg_flag::Z: F = ((F & 0b01111111) | (value << 7)); break;
-        case Reg_flag::N: F = ((F & 0b10111111) | (value << 6)); break;
-        case Reg_flag::H: F = ((F & 0b11011111) | (value << 5)); break;
-        case Reg_flag::C: F = ((F & 0b11101111) | (value << 4)); break;
+        case Reg_flag::Z: F = ((F & 0b0111'0000) | (uint8_t(value) << 7)); break;
+        case Reg_flag::N: F = ((F & 0b1011'0000) | (uint8_t(value) << 6)); break;
+        case Reg_flag::H: F = ((F & 0b1101'0000) | (uint8_t(value) << 5)); break;
+        case Reg_flag::C: F = ((F & 0b1110'0000) | (uint8_t(value) << 4)); break;
+        // case Reg_flag::NZ: F = ((F & 0b0111'0000) | (uint8_t(!value) << 7)); break; // Reading is one thing (jumps/calls)
+        // case Reg_flag::NN: F = ((F & 0b1011'0000) | (uint8_t(!value) << 6)); break; // But setting should never happen
+        // case Reg_flag::NH: F = ((F & 0b1101'0000) | (uint8_t(!value) << 5)); break;
+        // case Reg_flag::NC: F = ((F & 0b1110'0000) | (uint8_t(!value) << 4)); break;
+        default: printf("Cannot write to N* flag!"); break;
     }
 };
+void Register_Handler::latchFlags() {
+    F_latched = F;
+};[[nodiscard]] bool Register_Handler::getLatched(Reg_flag reg) const {
+    switch (reg) {
+        case Reg_flag::Z: return bool((F_latched >> 7) & 1);
+        case Reg_flag::N: return bool((F_latched >> 6) & 1);
+        case Reg_flag::H: return bool((F_latched >> 5) & 1);
+        case Reg_flag::C: return bool((F_latched >> 4) & 1);
+        case Reg_flag::NZ: return !bool((F_latched >> 7) & 1);
+        case Reg_flag::NN: return !bool((F_latched >> 6) & 1);
+        case Reg_flag::NH: return !bool((F_latched >> 5) & 1);
+        case Reg_flag::NC: return !bool((F_latched >> 4) & 1);
+    }
+    return false;
+};
+
 
 Cart_Details::Cart_Details():
     m_has_load_error{ false },

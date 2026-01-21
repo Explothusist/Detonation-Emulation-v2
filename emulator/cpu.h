@@ -25,6 +25,7 @@ class DMG_CPU {
         void Initialize(bool use_boot_rom);
 
         Opcode* parseOpcode(uint8_t opcode);
+        void clearOpcode(); // So that variable length ones can fix themselves
         void runMCycle();
         void runTCycle();
 
@@ -38,6 +39,7 @@ class DMG_CPU {
         int m_cycle_count;
 
         Opcode* m_curr_opcode;
+        // int m_curr_opcode_length;
         int m_curr_opcode_mcycle;
 
         bool m_abort;

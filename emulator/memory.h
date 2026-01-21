@@ -14,7 +14,8 @@ enum class Reg_u8 {
     H, L,
     SP_H, SP_L,
     PC_H, PC_L,
-    temp
+    WZ_H, WZ_L,
+    // temp
 };
 enum class Reg_u16 {
     AF,
@@ -23,10 +24,12 @@ enum class Reg_u16 {
     HL,
     SP,
     PC,
-    temp16
+    WZ,
+    // temp16
 };
 enum class Reg_flag {
-    Z, N, H, C
+    Z, N, H, C,
+    NZ, NN, NH, NC // Inverses (for jumps/calls)
 };
 
 class Register_Handler {
@@ -40,6 +43,9 @@ class Register_Handler {
         [[nodiscard]] bool get(Reg_flag reg) const;
         void set(Reg_flag reg, bool value);
 
+        void latchFlags();
+        [[nodiscard]] bool getLatched(Reg_flag reg) const;
+
     private:
         uint8_t F;
         uint8_t A;
@@ -52,8 +58,12 @@ class Register_Handler {
         uint16_t SP; // Stack Pointer
         uint16_t PC; // Program Counter
 
-        uint8_t temp; // For use by opcodes
-        uint16_t temp16;
+        uint16_t WZ; // Internal Storage between opcodes
+
+        uint8_t F_latched; // For flag latching
+
+        // uint8_t temp; // For use by opcodes
+        // uint16_t temp16;
 };
 
 class Cart_Details {

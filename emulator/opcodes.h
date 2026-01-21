@@ -13,6 +13,13 @@ struct Opcode {
 };
 
 extern Opcode Opcode_x00_NOP;
+extern Opcode Opcode_x01_STOP;
+extern Opcode Opcode_x02_JR_NZ;
+extern Opcode Opcode_x03_JR_NC;
+extern Opcode Opcode_x04_LD_B_B;
+extern Opcode Opcode_x05_LD_D_B;
+extern Opcode Opcode_x06_LD_H_B;
+extern Opcode Opcode_x07_LD_HL_B;
 extern Opcode Opcode_xZZ_UNIMPLEMENTED;
 
 #endif

@@ -11,6 +11,7 @@ DMG_CPU::DMG_CPU():
     m_apu{ DMG_APU() },
     m_cycle_count{ 0 },
     m_curr_opcode{ nullptr },
+    // m_curr_opcode_length{ 0 },
     m_curr_opcode_mcycle{ 0 },
     m_abort{ false }
 {
@@ -59,9 +60,10 @@ void DMG_CPU::PowerCycle() {
 };
 void DMG_CPU::Reset() {
     m_cycle_count = 0;
-    m_abort = false;
     m_curr_opcode = nullptr;
+    // m_curr_opcode_length = 0;
     m_curr_opcode_mcycle = 0;
+    m_abort = false;
 };
 
 
@@ -71,10 +73,14 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         default: return &Opcode_xZZ_UNIMPLEMENTED;
     }
 };
+void DMG_CPU::clearOpcode() {
+    m_curr_opcode = nullptr;
+};
 void DMG_CPU::runMCycle() {
     if (!m_curr_opcode || m_curr_opcode_mcycle >= m_curr_opcode->length) {
         uint8_t opcode = m_Memory.PC_Eat_Byte(m_regs);
         m_curr_opcode = parseOpcode(opcode);
+        // m_curr_opcode_length = m_curr_opcode->length; // For the variable length opcodes
         m_curr_opcode_mcycle = 0;
     }
 
