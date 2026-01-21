@@ -70,6 +70,12 @@ void DMG_CPU::Reset() {
 Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
     switch (opcode) {
         case 0x00: return &Opcode_x00_NOP;
+        case 0x10: return &Opcode_x10_STOP;
+        case 0x18: return &Opcode_x18_JR;
+        case 0x20: return &Opcode_x20_JR_NZ;
+        case 0x28: return &Opcode_x28_JR_Z;
+        case 0x30: return &Opcode_x30_JR_NC;
+        case 0x38: return &Opcode_x38_JR_C;
         default: return &Opcode_xZZ_UNIMPLEMENTED;
     }
 };

@@ -6,30 +6,30 @@
 #include <string>
 #include "../utils.h"
 
-enum class Reg_u8 {
-    A, F,
-    B, // high
-    C, // low
-    D, E,
-    H, L,
-    SP_H, SP_L,
-    PC_H, PC_L,
-    WZ_H, WZ_L,
+enum class Reg_u8 : uint8_t {
+    A = 0, F = 1,
+    B = 2, // high
+    C = 3, // low
+    D = 4, E = 5,
+    H = 6, L = 7,
+    SP_H = 8, SP_L = 9,
+    PC_H = 10, PC_L = 11,
+    WZ_H = 12, WZ_L = 13,
     // temp
 };
-enum class Reg_u16 {
-    AF,
-    BC,
-    DE,
-    HL,
-    SP,
-    PC,
-    WZ,
+enum class Reg_u16 : uint8_t {
+    AF = 0,
+    BC = 1,
+    DE = 2,
+    HL = 3,
+    SP = 4,
+    PC = 5,
+    WZ = 6,
     // temp16
 };
-enum class Reg_flag {
-    Z, N, H, C,
-    NZ, NN, NH, NC // Inverses (for jumps/calls)
+enum class Reg_flag : uint8_t {
+    Z = 0, N = 1, H = 2, C = 3,
+    NZ = 4, NN = 5, NH = 6, NC = 7 // Inverses (for jumps/calls)
 };
 
 class Register_Handler {
