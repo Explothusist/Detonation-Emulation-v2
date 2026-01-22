@@ -36,7 +36,8 @@ Register_Handler::Register_Handler():
         case Reg_u8::PC_L: return (PC & 0xff);
         case Reg_u8::WZ_H: return (WZ >> 8);
         case Reg_u8::WZ_L: return (WZ & 0xff);
-        // case Reg_u8::temp: return temp;
+        case Reg_u8::temp_H: return (temp >> 8);
+        case Reg_u8::temp_L: return (temp & 0xff);
     }
     return 0;
 };
@@ -56,7 +57,8 @@ void Register_Handler::set(Reg_u8 reg, uint8_t value) {
         case Reg_u8::PC_L: PC = ((PC & 0xff00) | value); break;
         case Reg_u8::WZ_H: WZ = ((WZ & 0x00ff) | (uint16_t(value) << 8)); break;
         case Reg_u8::WZ_L: WZ = ((WZ & 0xff00) | value); break;
-        // case Reg_u8::temp: temp = value; break;
+        case Reg_u8::temp_H: WZ = ((temp & 0x00ff) | (uint16_t(value) << 8)); break;
+        case Reg_u8::temp_L: WZ = ((temp & 0xff00) | value); break;
     }
 };
 [[nodiscard]] uint16_t Register_Handler::get(Reg_u16 reg) const {
@@ -68,7 +70,7 @@ void Register_Handler::set(Reg_u8 reg, uint8_t value) {
         case Reg_u16::SP: return (SP);
         case Reg_u16::PC: return (PC);
         case Reg_u16::WZ: return (WZ);
-        // case Reg_u16::temp16: return (temp16);
+        case Reg_u16::temp: return (temp);
     }
     return 0;
 };
@@ -81,7 +83,7 @@ void Register_Handler::set(Reg_u16 reg, uint16_t value) {
         case Reg_u16::SP: SP = value; break;
         case Reg_u16::PC: PC = value; break;
         case Reg_u16::WZ: WZ = value; break;
-        // case Reg_u16::temp16: temp16 = value; break;
+        case Reg_u16::temp: temp = value; break;
     }
 };
 [[nodiscard]] bool Register_Handler::get(Reg_flag reg) const {
@@ -112,7 +114,8 @@ void Register_Handler::set(Reg_flag reg, bool value) {
 };
 void Register_Handler::latchFlags() {
     F_latched = F;
-};[[nodiscard]] bool Register_Handler::getLatched(Reg_flag reg) const {
+};
+[[nodiscard]] bool Register_Handler::getLatched(Reg_flag reg) const {
     switch (reg) {
         case Reg_flag::Z: return bool((F_latched >> 7) & 1);
         case Reg_flag::N: return bool((F_latched >> 6) & 1);

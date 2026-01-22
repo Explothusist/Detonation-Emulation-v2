@@ -180,6 +180,112 @@ Opcode Opcode_x7E_LD_A_HL = { { LD_N_HL_MCycle_1<Reg_u8::A>, LD_N_HL_MCycle_2<Re
 Opcode Opcode_x7F_LD_A_A = { { LD_N_N_MCycle_1<Reg_u8::A, Reg_u8::A> }, 1 };
 
 
+// ----------------- 8 bit Addition -----------------
+uint8_t ALU_B8_ADDER(DMG_CPU &m_cpu, uint8_t num1, uint8_t num2, uint8_t carry_bit = 0) {
+    uint8_t half = (num1 & 0xf) + (num2 & 0xf) + carry_bit; // For half carry
+    uint16_t unmasked = static_cast<uint16_t>(num1) + static_cast<uint16_t>(num2) + static_cast<uint16_t>(carry_bit); // For carry
+    uint8_t masked = static_cast<uint8_t>(unmasked & 0xff);
+    m_cpu.m_regs.set(Reg_flag::Z, (masked == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, ((half >> 4) & 0b1 == 1));
+    m_cpu.m_regs.set(Reg_flag::C, ((unmasked >> 8) & 0b1 == 1));
+    return masked;
+};
+
+template<Reg_u8 REG>
+void ADD_A_N_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_ADDER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(REG)));
+};
+void ADD_A_HL_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read(m_cpu.m_regs.get(Reg_u16::HL)));
+};
+void ADD_A_HL_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_ADDER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L)));
+};
+
+template<Reg_u8 REG>
+void ADC_A_N_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_ADDER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(REG), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
+};
+void ADC_A_HL_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read(m_cpu.m_regs.get(Reg_u16::HL)));
+};
+void ADC_A_HL_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_ADDER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
+};
+
+Opcode Opcode_x80_ADD_A_B = { { ADD_A_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_x81_ADD_A_C = { { ADD_A_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_x82_ADD_A_D = { { ADD_A_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_x83_ADD_A_E = { { ADD_A_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_x84_ADD_A_H = { { ADD_A_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_x85_ADD_A_L = { { ADD_A_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_x86_ADD_A_HL = { { ADD_A_HL_MCycle_1, ADD_A_HL_MCycle_2 }, 2 };
+Opcode Opcode_x87_ADD_A_A = { { ADD_A_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_x88_ADC_A_B = { { ADC_A_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_x89_ADC_A_C = { { ADC_A_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_x8A_ADC_A_D = { { ADC_A_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_x8B_ADC_A_E = { { ADC_A_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_x8C_ADC_A_H = { { ADC_A_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_x8D_ADC_A_L = { { ADC_A_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_x8E_ADC_A_HL = { { ADC_A_HL_MCycle_1, ADC_A_HL_MCycle_2 }, 2 };
+Opcode Opcode_x8F_ADC_A_A = { { ADC_A_N_MCycle_1<Reg_u8::A> }, 1 };
+
+
+// ----------------- 8 bit Subtraction -----------------
+uint8_t ALU_B8_SUBBER(DMG_CPU &m_cpu, uint8_t num1, uint8_t num2, uint8_t carry_bit = 0) {
+    // uint8_t half = (num1 & 0xf) - (num2 & 0xf) - carry_bit; // For half carry
+    uint16_t unmasked = static_cast<uint16_t>(num1) - static_cast<uint16_t>(num2) - static_cast<uint16_t>(carry_bit); // For carry
+    uint8_t masked = static_cast<uint8_t>(unmasked & 0xff);
+    m_cpu.m_regs.set(Reg_flag::Z, (masked == 0));
+    m_cpu.m_regs.set(Reg_flag::N, true);
+    m_cpu.m_regs.set(Reg_flag::H, (num1 & 0xf) < ((num2 & 0xf) + carry_bit));
+    m_cpu.m_regs.set(Reg_flag::C, num1 < (num2 + carry_bit));
+    return masked;
+};
+
+template<Reg_u8 REG>
+void SUB_A_N_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_SUBBER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(REG)));
+};
+void SUB_A_HL_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read(m_cpu.m_regs.get(Reg_u16::HL)));
+};
+void SUB_A_HL_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_SUBBER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L)));
+};
+
+template<Reg_u8 REG>
+void SBC_A_N_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_SUBBER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(REG), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
+};
+void SBC_A_HL_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read(m_cpu.m_regs.get(Reg_u16::HL)));
+};
+void SBC_A_HL_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::A, ALU_B8_SUBBER(m_cpu, m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
+};
+
+Opcode Opcode_x90_SUB_A_B = { { SUB_A_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_x91_SUB_A_C = { { SUB_A_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_x92_SUB_A_D = { { SUB_A_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_x93_SUB_A_E = { { SUB_A_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_x94_SUB_A_H = { { SUB_A_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_x95_SUB_A_L = { { SUB_A_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_x96_SUB_A_HL = { { SUB_A_HL_MCycle_1, SUB_A_HL_MCycle_2 }, 2 };
+Opcode Opcode_x97_SUB_A_A = { { SUB_A_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_x98_SBC_A_B = { { SBC_A_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_x99_SBC_A_C = { { SBC_A_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_x9A_SBC_A_D = { { SBC_A_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_x9B_SBC_A_E = { { SBC_A_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_x9C_SBC_A_H = { { SBC_A_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_x9D_SBC_A_L = { { SBC_A_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_x9E_SBC_A_HL = { { SBC_A_HL_MCycle_1, SBC_A_HL_MCycle_2 }, 2 };
+Opcode Opcode_x9F_SBC_A_A = { { SBC_A_N_MCycle_1<Reg_u8::A> }, 1 };
+
+
 // ----------------- Unimplemented -----------------
 void UNIMPLEMENTED_MCycle_1(DMG_CPU &m_cpu) {
     printf("ERROR: Unimplemented Opcode");

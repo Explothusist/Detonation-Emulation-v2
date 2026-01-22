@@ -99,6 +99,45 @@ extern Opcode Opcode_x7D_LD_A_L;
 extern Opcode Opcode_x7E_LD_A_HL;
 extern Opcode Opcode_x7F_LD_A_A;
 
+// ----------------- 8 bit Addition -----------------
+extern Opcode Opcode_x80_ADD_A_B;
+extern Opcode Opcode_x81_ADD_A_C;
+extern Opcode Opcode_x82_ADD_A_D;
+extern Opcode Opcode_x83_ADD_A_E;
+extern Opcode Opcode_x84_ADD_A_H;
+extern Opcode Opcode_x85_ADD_A_L;
+extern Opcode Opcode_x86_ADD_A_HL;
+extern Opcode Opcode_x87_ADD_A_A;
+
+extern Opcode Opcode_x88_ADC_A_B;
+extern Opcode Opcode_x89_ADC_A_C;
+extern Opcode Opcode_x8A_ADC_A_D;
+extern Opcode Opcode_x8B_ADC_A_E;
+extern Opcode Opcode_x8C_ADC_A_H;
+extern Opcode Opcode_x8D_ADC_A_L;
+extern Opcode Opcode_x8E_ADC_A_HL;
+extern Opcode Opcode_x8F_ADC_A_A;
+
+// ----------------- 8 bit Subtraction -----------------
+extern Opcode Opcode_x90_SUB_A_B;
+extern Opcode Opcode_x91_SUB_A_C;
+extern Opcode Opcode_x92_SUB_A_D;
+extern Opcode Opcode_x93_SUB_A_E;
+extern Opcode Opcode_x94_SUB_A_H;
+extern Opcode Opcode_x95_SUB_A_L;
+extern Opcode Opcode_x96_SUB_A_HL;
+extern Opcode Opcode_x97_SUB_A_A;
+
+extern Opcode Opcode_x98_SBC_A_B;
+extern Opcode Opcode_x99_SBC_A_C;
+extern Opcode Opcode_x9A_SBC_A_D;
+extern Opcode Opcode_x9B_SBC_A_E;
+extern Opcode Opcode_x9C_SBC_A_H;
+extern Opcode Opcode_x9D_SBC_A_L;
+extern Opcode Opcode_x9E_SBC_A_HL;
+extern Opcode Opcode_x9F_SBC_A_A;
+
+
 extern Opcode Opcode_xZZ_UNIMPLEMENTED;
 
 #endif

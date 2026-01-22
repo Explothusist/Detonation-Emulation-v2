@@ -15,7 +15,7 @@ enum class Reg_u8 : uint8_t {
     SP_H = 8, SP_L = 9,
     PC_H = 10, PC_L = 11,
     WZ_H = 12, WZ_L = 13,
-    // temp
+    temp_H = 14, temp_L = 15
 };
 enum class Reg_u16 : uint8_t {
     AF = 0,
@@ -25,7 +25,7 @@ enum class Reg_u16 : uint8_t {
     SP = 4,
     PC = 5,
     WZ = 6,
-    // temp16
+    temp = 7
 };
 enum class Reg_flag : uint8_t {
     Z = 0, N = 1, H = 2, C = 3,
@@ -62,8 +62,7 @@ class Register_Handler {
 
         uint8_t F_latched; // For flag latching
 
-        // uint8_t temp; // For use by opcodes
-        // uint16_t temp16;
+        uint16_t temp; // For use by opcodes
 };
 
 class Cart_Details {
