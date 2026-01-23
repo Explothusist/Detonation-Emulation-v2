@@ -137,6 +137,43 @@ extern Opcode Opcode_x9D_SBC_A_L;
 extern Opcode Opcode_x9E_SBC_A_HL;
 extern Opcode Opcode_x9F_SBC_A_A;
 
+// ----------------- 8 bit Bit Operations -----------------
+extern Opcode Opcode_xA0_AND_A_B;
+extern Opcode Opcode_xA1_AND_A_C;
+extern Opcode Opcode_xA2_AND_A_D;
+extern Opcode Opcode_xA3_AND_A_E;
+extern Opcode Opcode_xA4_AND_A_H;
+extern Opcode Opcode_xA5_AND_A_L;
+extern Opcode Opcode_xA6_AND_A_HL;
+extern Opcode Opcode_xA7_AND_A_A;
+
+extern Opcode Opcode_xA8_XOR_A_B;
+extern Opcode Opcode_xA9_XOR_A_C;
+extern Opcode Opcode_xAA_XOR_A_D;
+extern Opcode Opcode_xAB_XOR_A_E;
+extern Opcode Opcode_xAC_XOR_A_H;
+extern Opcode Opcode_xAD_XOR_A_L;
+extern Opcode Opcode_xAE_XOR_A_HL;
+extern Opcode Opcode_xAF_XOR_A_A;
+
+extern Opcode Opcode_xB0_OR_A_B;
+extern Opcode Opcode_xB1_OR_A_C;
+extern Opcode Opcode_xB2_OR_A_D;
+extern Opcode Opcode_xB3_OR_A_E;
+extern Opcode Opcode_xB4_OR_A_H;
+extern Opcode Opcode_xB5_OR_A_L;
+extern Opcode Opcode_xB6_OR_A_HL;
+extern Opcode Opcode_xB7_OR_A_A;
+
+extern Opcode Opcode_xB8_CP_A_B;
+extern Opcode Opcode_xB9_CP_A_C;
+extern Opcode Opcode_xBA_CP_A_D;
+extern Opcode Opcode_xBB_CP_A_E;
+extern Opcode Opcode_xBC_CP_A_H;
+extern Opcode Opcode_xBD_CP_A_L;
+extern Opcode Opcode_xBE_CP_A_HL;
+extern Opcode Opcode_xBF_CP_A_A;
+
 
 extern Opcode Opcode_xZZ_UNIMPLEMENTED;
 
