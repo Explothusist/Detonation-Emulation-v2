@@ -57,8 +57,8 @@ void Register_Handler::set(Reg_u8 reg, uint8_t value) {
         case Reg_u8::PC_L: PC = ((PC & 0xff00) | value); break;
         case Reg_u8::WZ_H: WZ = ((WZ & 0x00ff) | (uint16_t(value) << 8)); break;
         case Reg_u8::WZ_L: WZ = ((WZ & 0xff00) | value); break;
-        case Reg_u8::temp_H: WZ = ((temp & 0x00ff) | (uint16_t(value) << 8)); break;
-        case Reg_u8::temp_L: WZ = ((temp & 0xff00) | value); break;
+        case Reg_u8::temp_H: temp = ((temp & 0x00ff) | (uint16_t(value) << 8)); break;
+        case Reg_u8::temp_L: temp = ((temp & 0xff00) | value); break;
     }
 };
 [[nodiscard]] uint16_t Register_Handler::get(Reg_u16 reg) const {
@@ -1005,37 +1005,59 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
     return cart_details;
 };
 
-uint8_t Memory_Handler::Read(uint16_t address) {
-    if (address < 0x4000) {
-        // return X0000_ROM_STATIC[address];
-        return m_RomBanks[m_rom_bank_1][address];
-    }else if (address < 0x8000) {
-        // return X4000_ROM_BANK[address - 0x4000];
-        return m_RomBanks[m_rom_bank_2][address - 0x4000];
-    }else if (address < 0xa000) {
-        return X8000_VRAM[address - 0x8000];
-    }else if (address < 0xc000) {
-        // return XA000_EXT_RAM[address - 0xa000];
-        return m_RamBanks[m_ram_bank][address - 0xa000];
-    }else if (address < 0xe000) {
-        return XC000_WORK_RAM[address - 0xc000];
-    }else if (address < 0xfe00) {
-        printf("WARNING: Memory Read: Echo RAM Read");
-        return XC000_WORK_RAM[address - 0xe000];
-    }else if (address < 0xfea0) {
-        return XFE00_OAM[address - 0xfe00];
-    }else if (address < 0xff00) {
-        printf("ERROR: Memory Read: Unusable Memory Read");
-        return 0;
-    }else if (address < 0xff80) {
-        return XFF00_IO_REGS[address - 0xff00]; // Reading special registers...
-    }else if (address < 0xffff) {
-        return XFF80_HRAM[address - 0xff80];
+void Memory_Handler::latchBus(uint16_t addr) {
+    if (!bus_latched) {
+        latched_addr = addr;
+        bus_latched = true;
     }else {
-        return XFFFF_IE;
+        printf("ERROR: Memory Handler: latchBus: Bus Cannot Be Latched Twice In One M Cycle");
     }
 };
-void Memory_Handler::Write(uint16_t address, uint8_t value) {
+void Memory_Handler::freeBus() {
+    bus_latched = false;
+};
+uint8_t Memory_Handler::Read() {
+    if (!bus_latched) {
+        printf("ERROR: Memory Handler: Read: Bus Not Latched");
+        return open_bus;
+    }
+    uint16_t address = latched_addr;
+    uint8_t ret = open_bus;
+    if (address < 0x4000) {
+        ret = m_RomBanks[m_rom_bank_1][address];
+    }else if (address < 0x8000) {
+        ret = m_RomBanks[m_rom_bank_2][address - 0x4000];
+    }else if (address < 0xa000) {
+        ret = X8000_VRAM[address - 0x8000];
+    }else if (address < 0xc000) {
+        ret = m_RamBanks[m_ram_bank][address - 0xa000];
+    }else if (address < 0xe000) {
+        ret = XC000_WORK_RAM[address - 0xc000];
+    }else if (address < 0xfe00) {
+        printf("WARNING: Memory Read: Echo RAM Read");
+        ret = XC000_WORK_RAM[address - 0xe000];
+    }else if (address < 0xfea0) {
+        ret = XFE00_OAM[address - 0xfe00];
+    }else if (address < 0xff00) {
+        printf("ERROR: Memory Read: Unusable Memory Read");
+        ret = open_bus;
+    }else if (address < 0xff80) {
+        ret = XFF00_IO_REGS[address - 0xff00]; // Reading special registers...
+    }else if (address < 0xffff) {
+        ret = XFF80_HRAM[address - 0xff80];
+    }else {
+        ret = XFFFF_IE;
+    }
+    open_bus = ret; // Update open_bus
+    return ret;
+};
+void Memory_Handler::Write(uint8_t value) {
+    if (!bus_latched) {
+        printf("ERROR: Memory Handler: Write: Bus Not Latched");
+        return;
+    }
+    uint16_t address = latched_addr;
+    open_bus = value;
     if (address < 0x4000) {
         // X0000_ROM_STATIC[address] = value; // READ Only Memory
     }else if (address < 0x8000) {
@@ -1122,7 +1144,8 @@ void Memory_Handler::_Set(uint16_t address, uint8_t value) {
     }
 };
 uint8_t Memory_Handler::PC_Eat_Byte(Register_Handler &regs) {
-    uint8_t ret = Read(regs.get(Reg_u16::PC)); // Read from <PC>
+    latchBus(regs.get(Reg_u16::PC));
+    uint8_t ret = Read(); // Read from <PC>
     regs.set(Reg_u16::PC, regs.get(Reg_u16::PC) + 1); // Increment PC
     return ret;
 };

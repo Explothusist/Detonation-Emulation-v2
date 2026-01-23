@@ -204,6 +204,14 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xBD: return &Opcode_xBD_CP_A_L;
         case 0xBE: return &Opcode_xBE_CP_A_HL;
         case 0xBF: return &Opcode_xBF_CP_A_A;
+        case 0xC1: return &Opcode_xC1_PUSH_BC;
+        case 0xC5: return &Opcode_xC5_POP_BC;
+        case 0xD1: return &Opcode_xD1_PUSH_DE;
+        case 0xD5: return &Opcode_xD5_POP_DE;
+        case 0xE1: return &Opcode_xE1_PUSH_HL;
+        case 0xE5: return &Opcode_xE5_POP_HL;
+        case 0xF1: return &Opcode_xF1_PUSH_AF;
+        case 0xF5: return &Opcode_xF5_POP_AF;
         default: return &Opcode_xZZ_UNIMPLEMENTED;
     }
 };
@@ -220,6 +228,9 @@ void DMG_CPU::runMCycle() {
 
     (m_curr_opcode->mcycles[m_curr_opcode_mcycle])(*this);
     m_curr_opcode_mcycle += 1;
+
+    m_Memory.freeBus();
+    m_cycle_count += 4;
 };
 void DMG_CPU::runTCycle() {
     // Optional later expansion
@@ -242,4 +253,38 @@ void DMG_CPU::callAbort() {
 //     // gap = last+c_4_CYCLES - now
 //     // if gap > 0: delay(gap)
 //     // last += c_4_CYCLES
+// };
+
+
+uint8_t DMG_CPU::ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
+    uint8_t half = (num1 & 0xf) + (num2 & 0xf) + carry_bit; // For half carry
+    uint16_t unmasked = static_cast<uint16_t>(num1) + static_cast<uint16_t>(num2) + static_cast<uint16_t>(carry_bit); // For carry
+    uint8_t masked = static_cast<uint8_t>(unmasked & 0xff);
+    m_regs.set(Reg_flag::Z, (masked == 0));
+    m_regs.set(Reg_flag::N, false);
+    m_regs.set(Reg_flag::H, ((half >> 4) & 0b1 == 1));
+    m_regs.set(Reg_flag::C, ((unmasked >> 8) & 0b1 == 1));
+    return masked;
+};
+uint8_t DMG_CPU::ALU_B8_SUBBER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
+    // uint8_t half = (num1 & 0xf) - (num2 & 0xf) - carry_bit; // For half carry
+    uint16_t unmasked = static_cast<uint16_t>(num1) - static_cast<uint16_t>(num2) - static_cast<uint16_t>(carry_bit); // For carry
+    uint8_t masked = static_cast<uint8_t>(unmasked & 0xff);
+    m_regs.set(Reg_flag::Z, (masked == 0));
+    m_regs.set(Reg_flag::N, true);
+    m_regs.set(Reg_flag::H, (num1 & 0xf) < ((num2 & 0xf) + carry_bit));
+    m_regs.set(Reg_flag::C, num1 < (num2 + carry_bit));
+    return masked;
+};
+// void DMG_CPU::PUSH_B16(Reg_u8 reg_H, Reg_u8 reg_L) {
+//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) - 1); // Decrement SP
+//     m_Memory.Write(m_regs.get(Reg_u16::SP), m_regs.get(reg_H)); // Write High
+//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) - 1); // Decrement SP
+//     m_Memory.Write(m_regs.get(Reg_u16::SP), m_regs.get(reg_L)); // Write Low
+// };
+// void DMG_CPU::POP_B16(Reg_u8 reg_H, Reg_u8 reg_L) {
+//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) + 1); // Increment SP
+//     m_regs.set(reg_L, m_Memory.Read(m_regs.get(Reg_u16::SP))); // Read Low
+//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) + 1); // Increment SP
+//     m_regs.set(reg_H, m_Memory.Read(m_regs.get(Reg_u16::SP))); // Read High
 // };

@@ -26,6 +26,17 @@ extern Opcode Opcode_x28_JR_Z;
 extern Opcode Opcode_x30_JR_NC;
 extern Opcode Opcode_x38_JR_C;
 
+// ----------------- Push and Pop b16 -----------------
+extern Opcode Opcode_xC1_PUSH_BC;
+extern Opcode Opcode_xC5_POP_BC;
+extern Opcode Opcode_xD1_PUSH_DE;
+extern Opcode Opcode_xD5_POP_DE;
+extern Opcode Opcode_xE1_PUSH_HL;
+extern Opcode Opcode_xE5_POP_HL;
+extern Opcode Opcode_xF1_PUSH_AF;
+extern Opcode Opcode_xF5_POP_AF;
+
+
 // ----------------- 8 bit Loads -----------------
 extern Opcode Opcode_x40_LD_B_B;
 extern Opcode Opcode_x41_LD_B_C;

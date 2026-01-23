@@ -31,6 +31,11 @@ class DMG_CPU {
 
         void callAbort();
 
+        uint8_t ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit = 0);
+        uint8_t ALU_B8_SUBBER(uint8_t num1, uint8_t num2, uint8_t carry_bit = 0);
+        // void PUSH_B16(Reg_u8 reg1, Reg_u8 reg2);
+        // void POP_B16(Reg_u8 reg1, Reg_u8 reg2); // Pops into registers
+
         Memory_Handler m_Memory;
         Register_Handler m_regs;
         DMG_PPU m_ppu;

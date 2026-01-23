@@ -45,6 +45,9 @@ class Register_Handler {
 
         void latchFlags();
         [[nodiscard]] bool getLatched(Reg_flag reg) const;
+        void latchBus(uint16_t addr);
+        void freeBus();
+        [[nodiscard]] uint16_t getLatchedAddress() const;
 
     private:
         uint8_t F;
@@ -118,8 +121,12 @@ class Memory_Handler {
 
         Cart_Details Initialize(std::vector<uint8_t>* rom, bool use_boot_rom);
 
-        uint8_t Read(uint16_t address);
-        void Write(uint16_t address, uint8_t data);
+        // uint8_t Read(uint16_t address);
+        // void Write(uint16_t address, uint8_t data);
+        void latchBus(uint16_t addr);
+        void freeBus();
+        uint8_t Read(); // Must call latchBus() first
+        void Write(uint8_t data); // Must call latchBus() first
         uint8_t _Get(uint16_t address); // For setup/internal, raw output without checks
         void _Set(uint16_t address, uint8_t data); // For setup/internal, raw input without checks
         uint8_t PC_Eat_Byte(Register_Handler &regs);
@@ -153,6 +160,10 @@ class Memory_Handler {
 
         int m_num_rom_banks;
         int m_num_ram_banks;
+        
+        uint16_t latched_addr; // For bus latching
+        bool bus_latched;
+        uint8_t open_bus; // Value of last read/write
 
         void interpret_cartridge_type(uint8_t cart_type, Cart_Details &cart_details);
         void interpret_rom_size_type(uint8_t rom_size, Cart_Details &cart_details);
