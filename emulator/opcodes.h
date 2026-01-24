@@ -36,6 +36,13 @@ extern Opcode Opcode_x28_JR_Z;
 extern Opcode Opcode_x30_JR_NC;
 extern Opcode Opcode_x38_JR_C;
 
+// ----------------- Absolute Jumps -----------------
+extern Opcode Opcode_xC3_JP;
+extern Opcode Opcode_xC2_JP_NZ;
+extern Opcode Opcode_xCA_JP_Z;
+extern Opcode Opcode_xD2_JP_NC;
+extern Opcode Opcode_xDA_JP_C;
+
 // ----------------- Returns -----------------
 extern Opcode Opcode_xC9_RET;
 extern Opcode Opcode_xC0_RET_NZ;
@@ -120,6 +127,19 @@ extern Opcode Opcode_x7F_LD_A_A;
 // ----------------- Special 8 bit Loads -----------------
 extern Opcode Opcode_xE0_LDH_A8_A;
 extern Opcode Opcode_xF0_LDH_A_A8;
+
+extern Opcode Opcode_xE2_LDH_C_A;
+extern Opcode Opcode_xF2_LDH_A_C;
+
+extern Opcode Opcode_x02_LD_BC_A;
+extern Opcode Opcode_x12_LD_DE_A;
+extern Opcode Opcode_x22_LD_HLI_A;
+extern Opcode Opcode_x32_LD_HLD_A;
+
+extern Opcode Opcode_x0A_LD_BC_A;
+extern Opcode Opcode_x1A_LD_DE_A;
+extern Opcode Opcode_x2A_LD_HLI_A;
+extern Opcode Opcode_x3A_LD_HLD_A;
 
 // ----------------- 16 bit Loads -----------------
 extern Opcode Opcode_x01_LD_BC_N16;

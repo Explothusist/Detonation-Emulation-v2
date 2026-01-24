@@ -131,6 +131,43 @@ Opcode Opcode_x30_JR_NC = { { JR_F_MCycle_1<Reg_flag::NC>, JR_F_MCycle_2<Reg_fla
 Opcode Opcode_x38_JR_C = { { JR_F_MCycle_1<Reg_flag::C>, JR_F_MCycle_2<Reg_flag::C>, JR_F_MCycle_3<Reg_flag::C> }, 3 };
 
 
+// ----------------- Absolute Jumps -----------------
+void JP_MCycle_1(DMG_CPU &m_cpu) {
+    // Lower byte of PC ends up in WZ after bus shenanigans
+    // m_cpu.m_regs.set(Reg_u8::WZ_L, m_cpu.m_regs.get(Reg_u8::PC_L)); // Incidental, not functional
+};
+void JP_MCycle_2(DMG_CPU &m_cpu) {
+    // Read into WZ
+    m_cpu.m_regs.set(Reg_u8::WZ_L, m_cpu.PC_Eat_Byte());
+};
+void JP_MCycle_3(DMG_CPU &m_cpu) {
+    // Read into WZ
+    m_cpu.m_regs.set(Reg_u8::WZ_H, m_cpu.PC_Eat_Byte());
+};
+void JP_MCycle_4(DMG_CPU &m_cpu) {
+    // Jump!
+    m_cpu.m_regs.set(Reg_u16::PC, m_cpu.m_regs.get(Reg_u16::WZ));
+};
+template <Reg_flag FLAG>
+void JP_F_MCycle_1(DMG_CPU &m_cpu) {
+    JP_MCycle_1(m_cpu);
+    m_cpu.m_regs.latchFlags();
+};
+template <Reg_flag FLAG>
+void JP_F_MCycle_3(DMG_CPU &m_cpu) {
+    JP_MCycle_3(m_cpu);
+    if (!m_cpu.m_regs.getLatched(FLAG)) {
+        m_cpu.clearOpcode(); // End the opcode earlier
+    }
+};
+
+Opcode Opcode_xC3_JP = { { JP_MCycle_1, JP_MCycle_2, JP_MCycle_3, JP_MCycle_4 }, 4 };
+Opcode Opcode_xC2_JP_NZ = { { JP_F_MCycle_1<Reg_flag::NZ>, JP_MCycle_2, JP_F_MCycle_3<Reg_flag::NZ>, JP_MCycle_4 }, 4 };
+Opcode Opcode_xCA_JP_Z = { { JP_F_MCycle_1<Reg_flag::Z>, JP_MCycle_2, JP_F_MCycle_3<Reg_flag::Z>, JP_MCycle_4 }, 4 };
+Opcode Opcode_xD2_JP_NC = { { JP_F_MCycle_1<Reg_flag::NC>, JP_MCycle_2, JP_F_MCycle_3<Reg_flag::NC>, JP_MCycle_4 }, 4 };
+Opcode Opcode_xDA_JP_C = { { JP_F_MCycle_1<Reg_flag::C>, JP_MCycle_2, JP_F_MCycle_3<Reg_flag::C>, JP_MCycle_4 }, 4 };
+
+
 // ----------------- Returns -----------------
 void RET_MCycle_1(DMG_CPU &m_cpu) {
     // Wait for bus to be free
@@ -278,9 +315,6 @@ void LDH_A8_A_MCycle_3(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(0xff00 + m_cpu.m_regs.get(Reg_u8::temp_L));
     m_cpu.m_Memory.Write(m_cpu.m_regs.get(Reg_u8::A));
 };
-
-Opcode Opcode_xE0_LDH_A8_A = { { LDH_A8_A_MCycle_1, LDH_A8_A_MCycle_2, LDH_A8_A_MCycle_3 }, 3 };
-
 void LDH_A_A8_MCycle_1(DMG_CPU &m_cpu) {
     // Waits to be able to read
 };
@@ -292,7 +326,66 @@ void LDH_A_A8_MCycle_3(DMG_CPU &m_cpu) {
     m_cpu.m_regs.set(Reg_u8::A, m_cpu.m_Memory.Read());
 };
 
+Opcode Opcode_xE0_LDH_A8_A = { { LDH_A8_A_MCycle_1, LDH_A8_A_MCycle_2, LDH_A8_A_MCycle_3 }, 3 };
 Opcode Opcode_xF0_LDH_A_A8 = { { LDH_A_A8_MCycle_1, LDH_A_A8_MCycle_2, LDH_A_A8_MCycle_3 }, 3 };
+
+void LDH_C_A_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits to be able to write
+};
+void LDH_C_A_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(0xff00 + m_cpu.m_regs.get(Reg_u8::C));
+    m_cpu.m_Memory.Write(m_cpu.m_regs.get(Reg_u8::A));
+};
+void LDH_A_C_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits to be able to read
+};
+void LDH_A_C_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(0xff00 + m_cpu.m_regs.get(Reg_u8::C));
+    m_cpu.m_regs.set(Reg_u8::A, m_cpu.m_Memory.Read());
+};
+
+Opcode Opcode_xE2_LDH_C_A = { { LDH_C_A_MCycle_1, LDH_C_A_MCycle_2 }, 2 };
+Opcode Opcode_xF2_LDH_A_C = { { LDH_A_C_MCycle_1, LDH_A_C_MCycle_2 }, 2 };
+
+template<Reg_u16 REG>
+void LD_NN_A_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits to be able to read
+};
+template<Reg_u16 REG>
+void LD_NN_A_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(REG));
+    m_cpu.set(Reg_u8::A, m_cpu.m_Memory.Read());
+};
+template<Reg_u16 REG, int INC>
+void LD_NNI_A_MCycle_2(DMG_CPU &m_cpu) {
+    LD_NN_A_MCycle_2<REG>(m_cpu);
+    m_cpu.m_regs.set(REG, m_cpu.m_regs.get(REG) + INC);
+};
+
+Opcode Opcode_x0A_LD_BC_A = { { LD_NN_A_MCycle_1<Reg_u16::BC>, LD_NN_A_MCycle_2<Reg_u16::BC> }, 2 };
+Opcode Opcode_x1A_LD_DE_A = { { LD_NN_A_MCycle_1<Reg_u16::DE>, LD_NN_A_MCycle_2<Reg_u16::DE> }, 2 };
+Opcode Opcode_x2A_LD_HLI_A = { { LD_NN_A_MCycle_1<Reg_u16::HL>, LD_NNI_A_MCycle_2<Reg_u16::HL, 1> }, 2 };
+Opcode Opcode_x3A_LD_HLD_A = { { LD_NN_A_MCycle_1<Reg_u16::HL>, LD_NNI_A_MCycle_2<Reg_u16::HL, -1> }, 2 };
+
+template<Reg_u16 REG>
+void LD_A_NN_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits to be able to write
+};
+template<Reg_u16 REG>
+void LD_A_NN_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(REG));
+    m_cpu.m_Memory.Write(m_cpu.m_regs.get(Reg_u8::A));
+};
+template<Reg_u16 REG, int INC>
+void LD_A_NNI_MCycle_2(DMG_CPU &m_cpu) {
+    LD_A_NN_MCycle_2<REG>(m_cpu);
+    m_cpu.m_regs.set(REG, m_cpu.m_regs.get(REG) + INC);
+};
+
+Opcode Opcode_x02_LD_BC_A = { { LD_A_NN_MCycle_1<Reg_u16::BC>, LD_A_NN_MCycle_2<Reg_u16::BC> }, 2 };
+Opcode Opcode_x12_LD_DE_A = { { LD_A_NN_MCycle_1<Reg_u16::DE>, LD_A_NN_MCycle_2<Reg_u16::DE> }, 2 };
+Opcode Opcode_x22_LD_HLI_A = { { LD_A_NN_MCycle_1<Reg_u16::HL>, LD_NNI_A_MCycle_2<Reg_u16::HL, 1> }, 2 };
+Opcode Opcode_x32_LD_HLD_A = { { LD_A_NN_MCycle_1<Reg_u16::HL>, LD_NNI_A_MCycle_2<Reg_u16::HL, -1> }, 2 };
 
 
 // ----------------- 16 bit Loads -----------------
