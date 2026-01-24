@@ -129,7 +129,8 @@ class Memory_Handler {
         void Write(uint8_t data); // Must call latchBus() first
         uint8_t _Get(uint16_t address); // For setup/internal, raw output without checks
         void _Set(uint16_t address, uint8_t data); // For setup/internal, raw input without checks
-        uint8_t PC_Eat_Byte(Register_Handler &regs);
+
+        void _Set_IME(bool value);
 
     private:
         // uint8_t X0000_ROM_STATIC[0x4000]; // (Switchable) // Reference m_RomBanks directly
@@ -143,6 +144,8 @@ class Memory_Handler {
         uint8_t XFF00_IO_REGS[0x80]; // More callbacks, less array?
         uint8_t XFF80_HRAM[0x7f];
         uint8_t XFFFF_IE;
+
+        bool IME;
 
         uint8_t m_RomBanks[512][0x4000];
         uint8_t m_RamBanks[16][0x2000];
@@ -161,9 +164,9 @@ class Memory_Handler {
         int m_num_rom_banks;
         int m_num_ram_banks;
         
-        uint16_t latched_addr; // For bus latching
-        bool bus_latched;
-        uint8_t open_bus; // Value of last read/write
+        uint16_t m_latched_addr; // For bus latching
+        bool m_bus_latched;
+        uint8_t m_open_bus; // Value of last read/write
 
         void interpret_cartridge_type(uint8_t cart_type, Cart_Details &cart_details);
         void interpret_rom_size_type(uint8_t rom_size, Cart_Details &cart_details);

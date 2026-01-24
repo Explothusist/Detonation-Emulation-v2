@@ -7,6 +7,14 @@
     #pragma GCC diagnostic push
     #pragma GCC diagnostic ignored "-Wunused-parameter"
 #endif
+#ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+#ifdef _MSC_VER
+    #pragma warning(push)
+    #pragma warning(disable : 4100)  // Unused parameter warning (MSVC specific)
+#endif
 
 // ----------------- Special -----------------
 void NOP_MCycle_1(DMG_CPU &m_cpu) {
@@ -34,44 +42,6 @@ Opcode Opcode_x76_HALT = {
     { HALT_MCycle_1 },
     1
 };
-
-
-// ----------------- Relative Jumps -----------------
-void JR_MCycle_1(DMG_CPU &m_cpu) {
-    // Lower byte of PC ends up in WZ after bus shenanigans
-    m_cpu.m_regs.set(Reg_u8::WZ_L, m_cpu.m_regs.get(Reg_u8::PC_L)); // Incidental, not functional
-};
-void JR_MCycle_2(DMG_CPU &m_cpu) {
-    // Add PC to WZ
-    int8_t offset = static_cast<int8_t>(m_cpu.m_Memory.PC_Eat_Byte(m_cpu.m_regs));
-    m_cpu.m_regs.set(Reg_u16::WZ, m_cpu.m_regs.get(Reg_u16::PC) + offset);
-};
-void JR_MCycle_3(DMG_CPU &m_cpu) {
-    // Jump by Offset (temp)
-    m_cpu.m_regs.set(Reg_u16::PC, m_cpu.m_regs.get(Reg_u16::WZ));
-};
-template <Reg_flag FLAG>
-void JR_F_MCycle_1(DMG_CPU &m_cpu) {
-    JR_MCycle_1(m_cpu);
-    m_cpu.m_regs.latchFlags();
-};
-template <Reg_flag FLAG>
-void JR_F_MCycle_2(DMG_CPU &m_cpu) {
-    JR_MCycle_2(m_cpu);
-    if (!m_cpu.m_regs.getLatched(FLAG)) {
-        m_cpu.clearOpcode(); // End the opcode earlier
-    }
-};
-template <Reg_flag FLAG>
-void JR_F_MCycle_3(DMG_CPU &m_cpu) {
-    JR_MCycle_3(m_cpu);
-};
-
-Opcode Opcode_x18_JR = { { JR_MCycle_1, JR_MCycle_2, JR_MCycle_3 }, 3 };
-Opcode Opcode_x20_JR_NZ = { { JR_F_MCycle_1<Reg_flag::NZ>, JR_F_MCycle_2<Reg_flag::NZ>, JR_F_MCycle_3<Reg_flag::NZ> }, 3 };
-Opcode Opcode_x28_JR_Z = { { JR_F_MCycle_1<Reg_flag::Z>, JR_F_MCycle_2<Reg_flag::Z>, JR_F_MCycle_3<Reg_flag::Z> }, 3 };
-Opcode Opcode_x30_JR_NC = { { JR_F_MCycle_1<Reg_flag::NC>, JR_F_MCycle_2<Reg_flag::NC>, JR_F_MCycle_3<Reg_flag::NC> }, 3 };
-Opcode Opcode_x38_JR_C = { { JR_F_MCycle_1<Reg_flag::C>, JR_F_MCycle_2<Reg_flag::C>, JR_F_MCycle_3<Reg_flag::C> }, 3 };
 
 
 // ----------------- Push and Pop b16 -----------------
@@ -121,6 +91,83 @@ Opcode Opcode_xC5_POP_BC = { { POP_NN_MCycle_1<Reg_u8::B, Reg_u8::C>, POP_NN_MCy
 Opcode Opcode_xD5_POP_DE = { { POP_NN_MCycle_1<Reg_u8::D, Reg_u8::E>, POP_NN_MCycle_2<Reg_u8::D, Reg_u8::E>, POP_NN_MCycle_3<Reg_u8::D, Reg_u8::E> }, 3 };
 Opcode Opcode_xE5_POP_HL = { { POP_NN_MCycle_1<Reg_u8::H, Reg_u8::L>, POP_NN_MCycle_2<Reg_u8::H, Reg_u8::L>, POP_NN_MCycle_3<Reg_u8::H, Reg_u8::L> }, 3 };
 Opcode Opcode_xF5_POP_AF = { { POP_NN_MCycle_1<Reg_u8::A, Reg_u8::F>, POP_NN_MCycle_2<Reg_u8::A, Reg_u8::F>, POP_NN_MCycle_3<Reg_u8::A, Reg_u8::F> }, 3 };
+
+
+// ----------------- Relative Jumps -----------------
+void JR_MCycle_1(DMG_CPU &m_cpu) {
+    // Lower byte of PC ends up in WZ after bus shenanigans
+    m_cpu.m_regs.set(Reg_u8::WZ_L, m_cpu.m_regs.get(Reg_u8::PC_L)); // Incidental, not functional
+};
+void JR_MCycle_2(DMG_CPU &m_cpu) {
+    // Add PC to WZ
+    int8_t offset = static_cast<int8_t>(m_cpu.PC_Eat_Byte());
+    m_cpu.m_regs.set(Reg_u16::WZ, m_cpu.m_regs.get(Reg_u16::PC) + offset);
+};
+void JR_MCycle_3(DMG_CPU &m_cpu) {
+    // Jump by Offset (temp)
+    m_cpu.m_regs.set(Reg_u16::PC, m_cpu.m_regs.get(Reg_u16::WZ));
+};
+template <Reg_flag FLAG>
+void JR_F_MCycle_1(DMG_CPU &m_cpu) {
+    JR_MCycle_1(m_cpu);
+    m_cpu.m_regs.latchFlags();
+};
+template <Reg_flag FLAG>
+void JR_F_MCycle_2(DMG_CPU &m_cpu) {
+    JR_MCycle_2(m_cpu);
+    if (!m_cpu.m_regs.getLatched(FLAG)) {
+        m_cpu.clearOpcode(); // End the opcode earlier
+    }
+};
+template <Reg_flag FLAG>
+void JR_F_MCycle_3(DMG_CPU &m_cpu) {
+    JR_MCycle_3(m_cpu);
+};
+
+Opcode Opcode_x18_JR = { { JR_MCycle_1, JR_MCycle_2, JR_MCycle_3 }, 3 };
+Opcode Opcode_x20_JR_NZ = { { JR_F_MCycle_1<Reg_flag::NZ>, JR_F_MCycle_2<Reg_flag::NZ>, JR_F_MCycle_3<Reg_flag::NZ> }, 3 };
+Opcode Opcode_x28_JR_Z = { { JR_F_MCycle_1<Reg_flag::Z>, JR_F_MCycle_2<Reg_flag::Z>, JR_F_MCycle_3<Reg_flag::Z> }, 3 };
+Opcode Opcode_x30_JR_NC = { { JR_F_MCycle_1<Reg_flag::NC>, JR_F_MCycle_2<Reg_flag::NC>, JR_F_MCycle_3<Reg_flag::NC> }, 3 };
+Opcode Opcode_x38_JR_C = { { JR_F_MCycle_1<Reg_flag::C>, JR_F_MCycle_2<Reg_flag::C>, JR_F_MCycle_3<Reg_flag::C> }, 3 };
+
+
+// ----------------- Returns -----------------
+void RET_MCycle_1(DMG_CPU &m_cpu) {
+    // Wait for bus to be free
+};
+void RET_MCycle_2(DMG_CPU &m_cpu) {
+    // Start loading new PC
+    POP_NN_MCycle_2<Reg_u8::WZ_H, Reg_u8::WZ_L>(m_cpu);
+};
+void RET_MCycle_3(DMG_CPU &m_cpu) {
+    // Finish loading new PC
+    POP_NN_MCycle_3<Reg_u8::WZ_H, Reg_u8::WZ_L>(m_cpu);
+};
+void RET_MCycle_4(DMG_CPU &m_cpu) {
+    // Jump to location
+    m_cpu.m_regs.set(Reg_u16::PC, m_cpu.m_regs.get(Reg_u16::WZ));
+};
+template <Reg_flag FLAG>
+void RET_F_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.latchFlags(); // Does nothing but check the condition
+};
+template <Reg_flag FLAG>
+void RET_F_MCycle_2(DMG_CPU &m_cpu) {
+    if (!m_cpu.m_regs.getLatched(FLAG)) {
+        m_cpu.clearOpcode(); // Ends early with only 2 cycles
+    } // Else continue with normal RET
+};
+void RETI_MCycle_4(DMG_CPU &m_cpu) {
+    RET_MCycle_4(m_cpu);
+    m_cpu.m_Memory._Set_IME(true);
+};
+
+Opcode Opcode_xC9_RET = { { RET_MCycle_1, RET_MCycle_2, RET_MCycle_3, RET_MCycle_4 }, 4 };
+Opcode Opcode_xC0_RET_NZ = { { RET_F_MCycle_1<Reg_flag::NZ>, RET_F_MCycle_2<Reg_flag::NZ>, RET_MCycle_2, RET_MCycle_3, RET_MCycle_4 }, 5 };
+Opcode Opcode_xC8_RET_Z = { { RET_F_MCycle_1<Reg_flag::Z>, RET_F_MCycle_2<Reg_flag::Z>, RET_MCycle_2, RET_MCycle_3, RET_MCycle_4 }, 5 };
+Opcode Opcode_xD0_RET_NC = { { RET_F_MCycle_1<Reg_flag::NC>, RET_F_MCycle_2<Reg_flag::NC>, RET_MCycle_2, RET_MCycle_3, RET_MCycle_4 }, 5 };
+Opcode Opcode_xD8_RET_C = { { RET_F_MCycle_1<Reg_flag::C>, RET_F_MCycle_2<Reg_flag::C>, RET_MCycle_2, RET_MCycle_3, RET_MCycle_4 }, 5 };
+Opcode Opcode_xD9_RETI = { { RET_MCycle_1, RET_MCycle_2, RET_MCycle_3, RETI_MCycle_4 }, 4 };
 
 
 // ----------------- 8 bit Loads -----------------
@@ -218,6 +265,54 @@ Opcode Opcode_x7C_LD_A_H = { { LD_N_N_MCycle_1<Reg_u8::A, Reg_u8::H> }, 1 };
 Opcode Opcode_x7D_LD_A_L = { { LD_N_N_MCycle_1<Reg_u8::A, Reg_u8::L> }, 1 };
 Opcode Opcode_x7E_LD_A_HL = { { LD_N_HL_MCycle_1<Reg_u8::A>, LD_N_HL_MCycle_2<Reg_u8::A> }, 2 };
 Opcode Opcode_x7F_LD_A_A = { { LD_N_N_MCycle_1<Reg_u8::A, Reg_u8::A> }, 1 };
+
+
+// ----------------- Special 8 bit Loads -----------------
+void LDH_A8_A_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits to be able to read
+};
+void LDH_A8_A_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.PC_Eat_Byte());
+};
+void LDH_A8_A_MCycle_3(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(0xff00 + m_cpu.m_regs.get(Reg_u8::temp_L));
+    m_cpu.m_Memory.Write(m_cpu.m_regs.get(Reg_u8::A));
+};
+
+Opcode Opcode_xE0_LDH_A8_A = { { LDH_A8_A_MCycle_1, LDH_A8_A_MCycle_2, LDH_A8_A_MCycle_3 }, 3 };
+
+void LDH_A_A8_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits to be able to read
+};
+void LDH_A_A8_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.PC_Eat_Byte());
+};
+void LDH_A_A8_MCycle_3(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(0xff00 + m_cpu.m_regs.get(Reg_u8::temp_L));
+    m_cpu.m_regs.set(Reg_u8::A, m_cpu.m_Memory.Read());
+};
+
+Opcode Opcode_xF0_LDH_A_A8 = { { LDH_A_A8_MCycle_1, LDH_A_A8_MCycle_2, LDH_A_A8_MCycle_3 }, 3 };
+
+
+// ----------------- 16 bit Loads -----------------
+template <Reg_u8 REG_H, Reg_u8 REG_L>
+void LD_NN_N16_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits to be able to read
+};
+template <Reg_u8 REG_H, Reg_u8 REG_L>
+void LD_NN_N16_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(REG_L, m_cpu.PC_Eat_Byte());
+};
+template <Reg_u8 REG_H, Reg_u8 REG_L>
+void LD_NN_N16_MCycle_3(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(REG_H, m_cpu.PC_Eat_Byte());
+};
+
+Opcode Opcode_x01_LD_BC_N16 = { { LD_NN_N16_MCycle_1<Reg_u8::B, Reg_u8::C>, LD_NN_N16_MCycle_2<Reg_u8::B, Reg_u8::C>, LD_NN_N16_MCycle_3<Reg_u8::B, Reg_u8::C> }, 3 };
+Opcode Opcode_x11_LD_DE_N16 = { { LD_NN_N16_MCycle_1<Reg_u8::D, Reg_u8::E>, LD_NN_N16_MCycle_2<Reg_u8::D, Reg_u8::E>, LD_NN_N16_MCycle_3<Reg_u8::D, Reg_u8::E> }, 3 };
+Opcode Opcode_x21_LD_HL_N16 = { { LD_NN_N16_MCycle_1<Reg_u8::H, Reg_u8::L>, LD_NN_N16_MCycle_2<Reg_u8::H, Reg_u8::L>, LD_NN_N16_MCycle_3<Reg_u8::H, Reg_u8::L> }, 3 };
+Opcode Opcode_x31_LD_SP_N16 = { { LD_NN_N16_MCycle_1<Reg_u8::SP_H, Reg_u8::SP_L>, LD_NN_N16_MCycle_2<Reg_u8::SP_H, Reg_u8::SP_L>, LD_NN_N16_MCycle_3<Reg_u8::SP_H, Reg_u8::SP_L> }, 3 };
 
 
 // ----------------- 8 bit Addition -----------------
@@ -444,4 +539,10 @@ Opcode Opcode_xZZ_UNIMPLEMENTED = {
 
 #ifdef __GNUC__
     #pragma GCC diagnostic pop
+#endif
+#ifdef __clang__
+    #pragma clang diagnostic pop
+#endif
+#ifdef _MSC_VER
+    #pragma warning(pop)
 #endif

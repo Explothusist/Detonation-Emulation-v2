@@ -238,6 +238,7 @@ constexpr uint16_t combine_chars(char a, char b) {
 
 Memory_Handler::Memory_Handler():
     XFFFF_IE{ 0 },
+    IME{ false },
 
     m_in_boot_rom_internal{ true },
     m_rom_bank_1{ 0 },
@@ -251,7 +252,11 @@ Memory_Handler::Memory_Handler():
     m_cart_has_rumble{ false },
 
     m_num_rom_banks{ 0 },
-    m_num_ram_banks{ 0 }
+    m_num_ram_banks{ 0 },
+
+    m_latched_addr{ 0 },
+    m_bus_latched{ false },
+    m_open_bus{ 0xff }
 {
     PowerCycle();
 };
@@ -283,6 +288,7 @@ void Memory_Handler::Reset() {
     std::memset(XFF00_IO_REGS,  0, sizeof(XFF00_IO_REGS));
     std::memset(XFF80_HRAM,     0, sizeof(XFF80_HRAM));
     XFFFF_IE = 0;
+    IME = false;
 };
 
 void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &cart_details) {
@@ -840,7 +846,7 @@ void Memory_Handler::interpret_licensee_code(uint8_t old_code, uint8_t new_code_
     }
 };
 Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot_rom) {
-    if (use_boot_rom) {
+    if (!use_boot_rom) {
         _Set(0xff00, 0xcf);
         _Set(0xff01, 0x00);
         _Set(0xff02, 0x7e);
@@ -883,6 +889,8 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
         _Set(0xff4a, 0x00);
         _Set(0xff4b, 0x00);
         _Set(0xffff, 0x00);
+
+        IME = true;
     }
 
     Cart_Details cart_details = Cart_Details();
@@ -1006,23 +1014,23 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
 };
 
 void Memory_Handler::latchBus(uint16_t addr) {
-    if (!bus_latched) {
-        latched_addr = addr;
-        bus_latched = true;
+    if (!m_bus_latched) {
+        m_latched_addr = addr;
+        m_bus_latched = true;
     }else {
         printf("ERROR: Memory Handler: latchBus: Bus Cannot Be Latched Twice In One M Cycle");
     }
 };
 void Memory_Handler::freeBus() {
-    bus_latched = false;
+    m_bus_latched = false;
 };
 uint8_t Memory_Handler::Read() {
-    if (!bus_latched) {
+    if (!m_bus_latched) {
         printf("ERROR: Memory Handler: Read: Bus Not Latched");
-        return open_bus;
+        return m_open_bus;
     }
-    uint16_t address = latched_addr;
-    uint8_t ret = open_bus;
+    uint16_t address = m_latched_addr;
+    uint8_t ret = m_open_bus;
     if (address < 0x4000) {
         ret = m_RomBanks[m_rom_bank_1][address];
     }else if (address < 0x8000) {
@@ -1040,7 +1048,7 @@ uint8_t Memory_Handler::Read() {
         ret = XFE00_OAM[address - 0xfe00];
     }else if (address < 0xff00) {
         printf("ERROR: Memory Read: Unusable Memory Read");
-        ret = open_bus;
+        ret = m_open_bus;
     }else if (address < 0xff80) {
         ret = XFF00_IO_REGS[address - 0xff00]; // Reading special registers...
     }else if (address < 0xffff) {
@@ -1048,16 +1056,16 @@ uint8_t Memory_Handler::Read() {
     }else {
         ret = XFFFF_IE;
     }
-    open_bus = ret; // Update open_bus
+    m_open_bus = ret; // Update m_open_bus
     return ret;
 };
 void Memory_Handler::Write(uint8_t value) {
-    if (!bus_latched) {
+    if (!m_bus_latched) {
         printf("ERROR: Memory Handler: Write: Bus Not Latched");
         return;
     }
-    uint16_t address = latched_addr;
-    open_bus = value;
+    uint16_t address = m_latched_addr;
+    m_open_bus = value;
     if (address < 0x4000) {
         // X0000_ROM_STATIC[address] = value; // READ Only Memory
     }else if (address < 0x8000) {
@@ -1143,12 +1151,6 @@ void Memory_Handler::_Set(uint16_t address, uint8_t value) {
         XFFFF_IE = value;
     }
 };
-uint8_t Memory_Handler::PC_Eat_Byte(Register_Handler &regs) {
-    latchBus(regs.get(Reg_u16::PC));
-    uint8_t ret = Read(); // Read from <PC>
-    regs.set(Reg_u16::PC, regs.get(Reg_u16::PC) + 1); // Increment PC
-    return ret;
-};
 
 
 std::string Memory_Handler::readROMName(std::vector<uint8_t>* rom) {
@@ -1161,5 +1163,9 @@ std::string Memory_Handler::readROMName(std::vector<uint8_t>* rom) {
         letter = rom->at(addr);
     }
     return romname;
+};
+
+void Memory_Handler::_Set_IME(bool value) {
+    IME = value;
 };
 

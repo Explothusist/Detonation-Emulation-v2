@@ -31,6 +31,7 @@ class DMG_CPU {
 
         void callAbort();
 
+        uint8_t PC_Eat_Byte();
         uint8_t ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit = 0);
         uint8_t ALU_B8_SUBBER(uint8_t num1, uint8_t num2, uint8_t carry_bit = 0);
         // void PUSH_B16(Reg_u8 reg1, Reg_u8 reg2);
