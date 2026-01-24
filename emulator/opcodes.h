@@ -18,6 +18,8 @@ struct Opcode {
 extern Opcode Opcode_x00_NOP;
 extern Opcode Opcode_x10_STOP;
 extern Opcode Opcode_x76_HALT;
+extern Opcode Opcode_xF3_DI;
+extern Opcode Opcode_xFB_EI;
 
 // ----------------- Push and Pop b16 -----------------
 extern Opcode Opcode_xC1_PUSH_BC;
@@ -222,7 +224,31 @@ extern Opcode Opcode_xBD_CP_A_L;
 extern Opcode Opcode_xBE_CP_A_HL;
 extern Opcode Opcode_xBF_CP_A_A;
 
+// ----------------- 16 bit Addition -----------------
+extern Opcode Opcode_x03_INC_BC;
+extern Opcode Opcode_x13_INC_DE;
+extern Opcode Opcode_x23_INC_HL;
+extern Opcode Opcode_x33_INC_SP;
 
+extern Opcode Opcode_x0B_DEC_BC;
+extern Opcode Opcode_x1B_DEC_DE;
+extern Opcode Opcode_x2B_DEC_HL;
+extern Opcode Opcode_x3B_DEC_SP;
+
+// ----------------- Invalid -----------------
+extern Opcode Opcode_xD3_INVALID;
+extern Opcode Opcode_xDB_INVALID;
+extern Opcode Opcode_xDD_INVALID;
+extern Opcode Opcode_xE3_INVALID;
+extern Opcode Opcode_xE4_INVALID;
+extern Opcode Opcode_xEB_INVALID;
+extern Opcode Opcode_xEC_INVALID;
+extern Opcode Opcode_xED_INVALID;
+extern Opcode Opcode_xF4_INVALID;
+extern Opcode Opcode_xFC_INVALID;
+extern Opcode Opcode_xFD_INVALID;
+
+// ----------------- Unimplemented -----------------
 extern Opcode Opcode_xZZ_UNIMPLEMENTED;
 
 #endif

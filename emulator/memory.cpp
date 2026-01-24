@@ -239,6 +239,7 @@ constexpr uint16_t combine_chars(char a, char b) {
 Memory_Handler::Memory_Handler():
     XFFFF_IE{ 0 },
     IME{ false },
+    IME_Delayed{ false },
 
     m_in_boot_rom_internal{ true },
     m_rom_bank_1{ 0 },
@@ -289,6 +290,7 @@ void Memory_Handler::Reset() {
     std::memset(XFF80_HRAM,     0, sizeof(XFF80_HRAM));
     XFFFF_IE = 0;
     IME = false;
+    IME_Delayed = false;
 };
 
 void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &cart_details) {
@@ -1167,5 +1169,21 @@ std::string Memory_Handler::readROMName(std::vector<uint8_t>* rom) {
 
 void Memory_Handler::_Set_IME(bool value) {
     IME = value;
+    IME_Delayed = value; // So that Delayed doesn't undo the change
+};
+void Memory_Handler::_Set_IME_Delayed(bool value) {
+    IME_Delayed = value;
+};
+void Memory_Handler::handleIME() {
+    if (IME_Delayed != IME) {
+        IME = IME_Delayed;
+    }
+};
+
+bool Memory_Handler::_InterruptsPending() {
+    return (_Get(0xff0f) & _Get(0xffff) & 0x1f) == 0;
+};
+bool Memory_Handler::_InterruptsEnabled() {
+    return IME;
 };
 

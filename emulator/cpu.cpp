@@ -72,32 +72,40 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x00: return &Opcode_x00_NOP;
         case 0x01: return &Opcode_x01_LD_BC_N16;
         case 0x02: return &Opcode_x02_LD_BC_A;
+        case 0x03: return &Opcode_x03_INC_BC;
 
         case 0x0A: return &Opcode_x0A_LD_BC_A;
+        case 0x0B: return &Opcode_x0B_DEC_BC;
 
         case 0x10: return &Opcode_x10_STOP;
         case 0x11: return &Opcode_x11_LD_DE_N16;
         case 0x12: return &Opcode_x12_LD_DE_A;
+        case 0x13: return &Opcode_x13_INC_DE;
 
         case 0x18: return &Opcode_x18_JR;
 
         case 0x1A: return &Opcode_x1A_LD_DE_A;
+        case 0x1B: return &Opcode_x1B_DEC_DE;
 
         case 0x20: return &Opcode_x20_JR_NZ;
         case 0x21: return &Opcode_x21_LD_HL_N16;
         case 0x22: return &Opcode_x22_LD_HLI_A;
+        case 0x23: return &Opcode_x23_INC_HL;
 
         case 0x28: return &Opcode_x28_JR_Z;
 
         case 0x2A: return &Opcode_x2A_LD_HLI_A;
+        case 0x2B: return &Opcode_x2B_DEC_HL;
 
         case 0x30: return &Opcode_x30_JR_NC;
         case 0x31: return &Opcode_x31_LD_SP_N16;
         case 0x32: return &Opcode_x32_LD_HLD_A;
+        case 0x33: return &Opcode_x33_INC_SP;
 
         case 0x38: return &Opcode_x38_JR_C;
 
         case 0x3A: return &Opcode_x3A_LD_HLD_A;
+        case 0x3B: return &Opcode_x3B_DEC_SP;
 
         case 0x40: return &Opcode_x40_LD_B_B;
         case 0x41: return &Opcode_x41_LD_B_C;
@@ -241,24 +249,40 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xD0: return &Opcode_xD0_RET_NC;
         case 0xD1: return &Opcode_xD1_PUSH_DE;
         case 0xD2: return &Opcode_xD2_JP_NC;
+        case 0xD3: return &Opcode_xD3_INVALID;
 
         case 0xD5: return &Opcode_xD5_POP_DE;
 
         case 0xD8: return &Opcode_xD8_RET_C;
         case 0xD9: return &Opcode_xD9_RETI;
         case 0xDA: return &Opcode_xDA_JP_C;
+        case 0xDB: return &Opcode_xDB_INVALID;
+
+        case 0xDD: return &Opcode_xDD_INVALID;
 
         case 0xE0: return &Opcode_xE0_LDH_A8_A;
         case 0xE1: return &Opcode_xE1_PUSH_HL;
         case 0xE2: return &Opcode_xE2_LDH_C_A;
+        case 0xE3: return &Opcode_xE3_INVALID;
+        case 0xE4: return &Opcode_xE4_INVALID;
 
         case 0xE5: return &Opcode_xE5_POP_HL;
+
+        case 0xEB: return &Opcode_xEB_INVALID;
+        case 0xEC: return &Opcode_xEC_INVALID;
+        case 0xED: return &Opcode_xED_INVALID;
 
         case 0xF0: return &Opcode_xF0_LDH_A_A8;
         case 0xF1: return &Opcode_xF1_PUSH_AF;
         case 0xF2: return &Opcode_xF2_LDH_A_C;
-
+        case 0xF3: return &Opcode_xF3_DI;
+        case 0xF4: return &Opcode_xF4_INVALID;
         case 0xF5: return &Opcode_xF5_POP_AF;
+
+        case 0xFB: return &Opcode_xFB_EI;
+        case 0xFC: return &Opcode_xFC_INVALID;
+        case 0xFD: return &Opcode_xFD_INVALID;
+
         default: return &Opcode_xZZ_UNIMPLEMENTED;
     }
 };
@@ -266,17 +290,29 @@ void DMG_CPU::clearOpcode() {
     m_curr_opcode = nullptr;
 };
 void DMG_CPU::runMCycle() {
-    if (!m_curr_opcode || m_curr_opcode_mcycle >= m_curr_opcode->length) {
-        uint8_t opcode = PC_Eat_Byte();
-        m_curr_opcode = parseOpcode(opcode);
-        // m_curr_opcode_length = m_curr_opcode->length; // For the variable length opcodes
-        m_curr_opcode_mcycle = 0;
+    // Interrupts
+    m_Memory.handleIME();
+
+    if (!m_stopped && !m_halted) {
+        if (!m_curr_opcode || m_curr_opcode_mcycle >= m_curr_opcode->length) {
+            uint8_t opcode = PC_Eat_Byte();
+            if (m_halt_bug) { // Causes double fetch
+                m_regs.set(Reg_u16::PC, m_regs.get(Reg_u16::PC) - 1);
+                m_halt_bug = false;
+            }
+            m_curr_opcode = parseOpcode(opcode);
+            // m_curr_opcode_length = m_curr_opcode->length; // For the variable length opcodes
+            m_curr_opcode_mcycle = 0;
+        }
+
+        (m_curr_opcode->mcycles[m_curr_opcode_mcycle])(*this);
+        m_curr_opcode_mcycle += 1;
+
+        m_Memory.freeBus();
     }
-
-    (m_curr_opcode->mcycles[m_curr_opcode_mcycle])(*this);
-    m_curr_opcode_mcycle += 1;
-
-    m_Memory.freeBus();
+    // Timers
+    // PPU
+    // APU
     m_cycle_count += 4;
 };
 void DMG_CPU::runTCycle() {
@@ -328,6 +364,18 @@ uint8_t DMG_CPU::ALU_B8_SUBBER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
     m_regs.set(Reg_flag::H, (num1 & 0xf) < ((num2 & 0xf) + carry_bit));
     m_regs.set(Reg_flag::C, num1 < (num2 + carry_bit));
     return masked;
+};
+void DMG_CPU::STOP() {
+    m_stopped = true;
+};
+void DMG_CPU::HALT() {
+    m_halted = true;
+};
+void DMG_CPU::HALT_Bug() {
+    m_halt_bug = true;
+};
+bool DMG_CPU::WAKE() {
+    return false; // Returns true if any buttons are pressed
 };
 // void DMG_CPU::PUSH_B16(Reg_u8 reg_H, Reg_u8 reg_L) {
 //     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) - 1); // Decrement SP

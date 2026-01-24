@@ -131,6 +131,11 @@ class Memory_Handler {
         void _Set(uint16_t address, uint8_t data); // For setup/internal, raw input without checks
 
         void _Set_IME(bool value);
+        void _Set_IME_Delayed(bool value); // EI
+        void handleIME();
+
+        bool _InterruptsPending(); // STOP
+        bool _InterruptsEnabled(); // HALT
 
     private:
         // uint8_t X0000_ROM_STATIC[0x4000]; // (Switchable) // Reference m_RomBanks directly
@@ -146,6 +151,7 @@ class Memory_Handler {
         uint8_t XFFFF_IE;
 
         bool IME;
+        bool IME_Delayed;
 
         uint8_t m_RomBanks[512][0x4000];
         uint8_t m_RamBanks[16][0x2000];

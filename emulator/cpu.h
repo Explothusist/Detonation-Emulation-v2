@@ -30,6 +30,11 @@ class DMG_CPU {
         void runTCycle();
 
         void callAbort();
+        
+        void STOP();
+        void HALT();
+        void HALT_Bug();
+        bool WAKE();
 
         uint8_t PC_Eat_Byte();
         uint8_t ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit = 0);
@@ -47,6 +52,10 @@ class DMG_CPU {
         Opcode* m_curr_opcode;
         // int m_curr_opcode_length;
         int m_curr_opcode_mcycle;
+
+        bool m_stopped; // Slightly different rules
+        bool m_halted;
+        bool m_halt_bug;
 
         bool m_abort;
 };

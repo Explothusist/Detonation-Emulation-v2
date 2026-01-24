@@ -20,28 +20,52 @@
 void NOP_MCycle_1(DMG_CPU &m_cpu) {
     // Do Nothing
 };
-Opcode Opcode_x00_NOP = {
-    { NOP_MCycle_1 },
-    1
-};
+Opcode Opcode_x00_NOP = { { NOP_MCycle_1 }, 1 };
 
 void STOP_MCycle_1(DMG_CPU &m_cpu) {
-    printf("ERROR: Unimplemented Opcode STOP");
-    m_cpu.callAbort();
+    if (m_cpu.m_Memory._InterruptsPending()) {
+        m_cpu.clearOpcode();
+    }
 };
-Opcode Opcode_x10_STOP = {
-    { STOP_MCycle_1 },
-    1
+void STOP_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.PC_Eat_Byte(); // Byte is discarded
+    if (!m_cpu.WAKE()) {
+        m_cpu.STOP();
+    }
 };
+Opcode Opcode_x10_STOP = { { STOP_MCycle_1, STOP_MCycle_2 }, 2 };
 
 void HALT_MCycle_1(DMG_CPU &m_cpu) {
-    printf("ERROR: Unimplemented Opcode HALT");
-    m_cpu.callAbort();
+    if (m_cpu.m_Memory._InterruptsEnabled()) {
+        if (m_cpu.m_Memory._InterruptsPending()) {
+            m_cpu.clearOpcode(); // Executes semi-normally
+        }else {
+            m_cpu.HALT();
+        }
+    }else {
+        if (m_cpu.m_Memory._InterruptsPending()) {
+            // Halt Bug
+            m_cpu.HALT_Bug();
+            m_cpu.clearOpcode();
+        }else {
+            m_cpu.HALT();
+            // Fake NOP Executes
+        }
+    }
 };
-Opcode Opcode_x76_HALT = {
-    { HALT_MCycle_1 },
-    1
+void HALT_MCycle_2(DMG_CPU &m_cpu) {
+    // This is the fake NOP cycle that may or may not happen
 };
+Opcode Opcode_x76_HALT = { { HALT_MCycle_1, HALT_MCycle_2 }, 2 };
+
+void DI_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory._Set_IME(false);
+};
+void EI_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory._Set_IME_Delayed(true);
+};
+Opcode Opcode_xF3_DI = { { DI_MCycle_1 }, 1 };
+Opcode Opcode_xFB_EI = { { EI_MCycle_1 }, 1 };
 
 
 // ----------------- Push and Pop b16 -----------------
@@ -618,6 +642,47 @@ Opcode Opcode_xBC_CP_A_H = { { CP_A_N_MCycle_1<Reg_u8::H> }, 1 };
 Opcode Opcode_xBD_CP_A_L = { { CP_A_N_MCycle_1<Reg_u8::L> }, 1 };
 Opcode Opcode_xBE_CP_A_HL = { { CP_A_HL_MCycle_1, CP_A_HL_MCycle_2 }, 2 };
 Opcode Opcode_xBF_CP_A_A = { { CP_A_N_MCycle_1<Reg_u8::A> }, 1 };
+
+
+// ----------------- 16 bit Addition -----------------
+template<Reg_u16 REG, int INC>
+void INC_NN_MCycle_1(DMG_CPU &m_cpu) {
+    // Wait for bus to be freed (because it uses post-increment)
+};
+template<Reg_u16 REG, int INC>
+void INC_NN_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(REG, m_cpu.m_regs.get(REG) + INC);
+};
+
+Opcode Opcode_x03_INC_BC = { { INC_NN_MCycle_1<Reg_u16::BC, 1>, INC_NN_MCycle_2<Reg_u16::BC, 1> }, 2 };
+Opcode Opcode_x13_INC_DE = { { INC_NN_MCycle_1<Reg_u16::DE, 1>, INC_NN_MCycle_2<Reg_u16::DE, 1> }, 2 };
+Opcode Opcode_x23_INC_HL = { { INC_NN_MCycle_1<Reg_u16::HL, 1>, INC_NN_MCycle_2<Reg_u16::HL, 1> }, 2 };
+Opcode Opcode_x33_INC_SP = { { INC_NN_MCycle_1<Reg_u16::SP, 1>, INC_NN_MCycle_2<Reg_u16::SP, 1> }, 2 };
+
+Opcode Opcode_x0B_DEC_BC = { { INC_NN_MCycle_1<Reg_u16::BC, 1>, INC_NN_MCycle_2<Reg_u16::BC, -1> }, 2 };
+Opcode Opcode_x1B_DEC_DE = { { INC_NN_MCycle_1<Reg_u16::DE, 1>, INC_NN_MCycle_2<Reg_u16::DE, -1> }, 2 };
+Opcode Opcode_x2B_DEC_HL = { { INC_NN_MCycle_1<Reg_u16::HL, 1>, INC_NN_MCycle_2<Reg_u16::HL, -1> }, 2 };
+Opcode Opcode_x3B_DEC_SP = { { INC_NN_MCycle_1<Reg_u16::SP, 1>, INC_NN_MCycle_2<Reg_u16::SP, -1> }, 2 };
+
+
+// ----------------- Invalid -----------------
+template<uint8_t OPCODE>
+void INVALID_MCycle_1(DMG_CPU &m_cpu) {
+    printf("ERROR: Invalid Opcode: '%i'", OPCODE);
+    m_cpu.callAbort();
+};
+
+Opcode Opcode_xD3_INVALID = { { INVALID_MCycle_1<0xD3> }, 1 };
+Opcode Opcode_xDB_INVALID = { { INVALID_MCycle_1<0xDB> }, 1 };
+Opcode Opcode_xDD_INVALID = { { INVALID_MCycle_1<0xDD> }, 1 };
+Opcode Opcode_xE3_INVALID = { { INVALID_MCycle_1<0xE3> }, 1 };
+Opcode Opcode_xE4_INVALID = { { INVALID_MCycle_1<0xE4> }, 1 };
+Opcode Opcode_xEB_INVALID = { { INVALID_MCycle_1<0xEB> }, 1 };
+Opcode Opcode_xEC_INVALID = { { INVALID_MCycle_1<0xEC> }, 1 };
+Opcode Opcode_xED_INVALID = { { INVALID_MCycle_1<0xED> }, 1 };
+Opcode Opcode_xF4_INVALID = { { INVALID_MCycle_1<0xF4> }, 1 };
+Opcode Opcode_xFC_INVALID = { { INVALID_MCycle_1<0xFC> }, 1 };
+Opcode Opcode_xFD_INVALID = { { INVALID_MCycle_1<0xFD> }, 1 };
 
 
 // ----------------- Unimplemented -----------------
