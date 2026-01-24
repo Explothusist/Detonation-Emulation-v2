@@ -192,6 +192,50 @@ Opcode Opcode_xD2_JP_NC = { { JP_F_MCycle_1<Reg_flag::NC>, JP_MCycle_2, JP_F_MCy
 Opcode Opcode_xDA_JP_C = { { JP_F_MCycle_1<Reg_flag::C>, JP_MCycle_2, JP_F_MCycle_3<Reg_flag::C>, JP_MCycle_4 }, 4 };
 
 
+// ----------------- Calls -----------------
+void CALL_MCycle_1(DMG_CPU &m_cpu) {
+    // Waiting for bus...
+};
+void CALL_MCycle_2(DMG_CPU &m_cpu) {
+    // Read into WZ
+    m_cpu.m_regs.set(Reg_u8::WZ_L, m_cpu.PC_Eat_Byte());
+};
+void CALL_MCycle_3(DMG_CPU &m_cpu) {
+    // Read into WZ
+    m_cpu.m_regs.set(Reg_u8::WZ_H, m_cpu.PC_Eat_Byte());
+};
+void CALL_MCycle_4(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(Reg_u16::SP, m_cpu.m_regs.get(Reg_u16::SP) - 1);
+};
+void CALL_MCycle_5(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::SP));
+    m_cpu.m_Memory.Write(m_cpu.m_regs.get(Reg_u8::PC_H));
+    m_cpu.m_regs.set(Reg_u16::SP, m_cpu.m_regs.get(Reg_u16::SP) - 1);
+};
+void CALL_MCycle_6(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::SP));
+    m_cpu.m_Memory.Write(m_cpu.m_regs.get(Reg_u8::PC_L));
+    m_cpu.m_regs.set(Reg_u16::PC, m_cpu.m_regs.get(Reg_u16::WZ));
+};
+template <Reg_flag FLAG>
+void CALL_F_MCycle_1(DMG_CPU &m_cpu) {
+    CALL_MCycle_1(m_cpu);
+    m_cpu.m_regs.latchFlags();
+};
+template <Reg_flag FLAG>
+void CALL_F_MCycle_3(DMG_CPU &m_cpu) {
+    CALL_MCycle_3(m_cpu);
+    if (!m_cpu.m_regs.getLatched(FLAG)) {
+        m_cpu.clearOpcode(); // End the opcode earlier
+    }
+};
+Opcode Opcode_xCD_CALL = { { CALL_MCycle_1, CALL_MCycle_2, CALL_MCycle_3, CALL_MCycle_4, CALL_MCycle_5, CALL_MCycle_6 }, 6 };
+Opcode Opcode_xC4_CALL_NZ = { { CALL_F_MCycle_1<Reg_flag::NZ>, CALL_MCycle_2, CALL_F_MCycle_3<Reg_flag::NZ>, CALL_MCycle_4, CALL_MCycle_5, CALL_MCycle_6 }, 6 };
+Opcode Opcode_xCC_CALL_Z = { { CALL_F_MCycle_1<Reg_flag::Z>, CALL_MCycle_2, CALL_F_MCycle_3<Reg_flag::Z>, CALL_MCycle_4, CALL_MCycle_5, CALL_MCycle_6 }, 6 };
+Opcode Opcode_xD4_CALL_NC = { { CALL_F_MCycle_1<Reg_flag::NC>, CALL_MCycle_2, CALL_F_MCycle_3<Reg_flag::NC>, CALL_MCycle_4, CALL_MCycle_5, CALL_MCycle_6 }, 6 };
+Opcode Opcode_xDC_CALL_C = { { CALL_F_MCycle_1<Reg_flag::C>, CALL_MCycle_2, CALL_F_MCycle_3<Reg_flag::C>, CALL_MCycle_4, CALL_MCycle_5, CALL_MCycle_6 }, 6 };
+
+
 // ----------------- Returns -----------------
 void RET_MCycle_1(DMG_CPU &m_cpu) {
     // Wait for bus to be free
@@ -442,8 +486,7 @@ void ADD_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void ADD_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L)));
+    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_Memory.Read()));
 };
 
 template<Reg_u8 REG>
@@ -455,8 +498,7 @@ void ADC_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void ADC_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
+    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_Memory.Read(), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
 };
 
 Opcode Opcode_x80_ADD_A_B = { { ADD_A_N_MCycle_1<Reg_u8::B> }, 1 };
@@ -477,6 +519,64 @@ Opcode Opcode_x8D_ADC_A_L = { { ADC_A_N_MCycle_1<Reg_u8::L> }, 1 };
 Opcode Opcode_x8E_ADC_A_HL = { { ADC_A_HL_MCycle_1, ADC_A_HL_MCycle_2 }, 2 };
 Opcode Opcode_x8F_ADC_A_A = { { ADC_A_N_MCycle_1<Reg_u8::A> }, 1 };
 
+template<Reg_u8 REG>
+void INC_N_MCycle_1(DMG_CPU &m_cpu) {
+    bool c_flag = m_cpu.m_regs.get(Reg_flag::C);
+    m_cpu.m_regs.set(REG, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(REG), 1));
+    m_cpu.m_regs.set(Reg_flag::C, c_flag); // Preserve the C flag
+};
+void INC_HL_MCycle_1(DMG_CPU &m_cpu) {
+    // Wait fo bus to be freed
+};
+void INC_HL_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
+};
+void INC_HL_MCycle_3(DMG_CPU &m_cpu) {
+    bool c_flag = m_cpu.m_regs.get(Reg_flag::C);
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
+    m_cpu.m_Memory.Write(m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::temp_L), 1));
+    m_cpu.m_regs.set(Reg_flag::C, c_flag); // Preserve the C flag
+};
+
+Opcode Opcode_x04_INC_B = { { INC_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_x0C_INC_C = { { INC_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_x14_INC_D = { { INC_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_x1C_INC_E = { { INC_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_x24_INC_H = { { INC_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_x2C_INC_L = { { INC_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_x34_INC_HL = { { INC_HL_MCycle_1, INC_HL_MCycle_2, INC_HL_MCycle_3 }, 3 };
+Opcode Opcode_x3C_INC_A = { { INC_N_MCycle_1<Reg_u8::A> }, 1 };
+
+template<Reg_u8 REG>
+void DEC_N_MCycle_1(DMG_CPU &m_cpu) {
+    bool c_flag = m_cpu.m_regs.get(Reg_flag::C);
+    m_cpu.m_regs.set(REG, m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(REG), 1));
+    m_cpu.m_regs.set(Reg_flag::C, c_flag); // Preserve the C flag
+};
+void DEC_HL_MCycle_1(DMG_CPU &m_cpu) {
+    // Wait fo bus to be freed
+};
+void DEC_HL_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
+};
+void DEC_HL_MCycle_3(DMG_CPU &m_cpu) {
+    bool c_flag = m_cpu.m_regs.get(Reg_flag::C);
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
+    m_cpu.m_Memory.Write(m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(Reg_u8::temp_L), 1));
+    m_cpu.m_regs.set(Reg_flag::C, c_flag); // Preserve the C flag
+};
+
+Opcode Opcode_x05_DEC_B = { { DEC_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_x0D_DEC_C = { { DEC_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_x15_DEC_D = { { DEC_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_x1D_DEC_E = { { DEC_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_x25_DEC_H = { { DEC_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_x2D_DEC_L = { { DEC_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_x35_DEC_HL = { { DEC_HL_MCycle_1, DEC_HL_MCycle_2, DEC_HL_MCycle_3 }, 3 };
+Opcode Opcode_x3D_DEC_A = { { DEC_N_MCycle_1<Reg_u8::A> }, 1 };
+
 
 // ----------------- 8 bit Subtraction -----------------
 template<Reg_u8 REG>
@@ -488,8 +588,7 @@ void SUB_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void SUB_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L)));
+    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_Memory.Read()));
 };
 
 template<Reg_u8 REG>
@@ -501,8 +600,7 @@ void SBC_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void SBC_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
+    m_cpu.m_regs.set(Reg_u8::A, m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_Memory.Read(), m_cpu.m_regs.get(Reg_flag::C) ? 1 : 0));
 };
 
 Opcode Opcode_x90_SUB_A_B = { { SUB_A_N_MCycle_1<Reg_u8::B> }, 1 };
@@ -539,8 +637,7 @@ void AND_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void AND_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    uint8_t result = m_cpu.m_regs.get(Reg_u8::A) & m_cpu.m_regs.get(Reg_u8::temp_L);
+    uint8_t result = m_cpu.m_regs.get(Reg_u8::A) & m_cpu.m_Memory.Read();
     m_cpu.m_regs.set(Reg_u8::A, result);
     m_cpu.m_regs.set(Reg_flag::Z, (result == 0));
     m_cpu.m_regs.set(Reg_flag::N, false);
@@ -571,8 +668,7 @@ void XOR_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void XOR_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    uint8_t result = m_cpu.m_regs.get(Reg_u8::A) ^ m_cpu.m_regs.get(Reg_u8::temp_L);
+    uint8_t result = m_cpu.m_regs.get(Reg_u8::A) ^ m_cpu.m_Memory.Read();
     m_cpu.m_regs.set(Reg_u8::A, result);
     m_cpu.m_regs.set(Reg_flag::Z, (result == 0));
     m_cpu.m_regs.set(Reg_flag::N, false);
@@ -603,8 +699,7 @@ void OR_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void OR_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    uint8_t result = m_cpu.m_regs.get(Reg_u8::A) | m_cpu.m_regs.get(Reg_u8::temp_L);
+    uint8_t result = m_cpu.m_regs.get(Reg_u8::A) | m_cpu.m_Memory.Read();
     m_cpu.m_regs.set(Reg_u8::A, result);
     m_cpu.m_regs.set(Reg_flag::Z, (result == 0));
     m_cpu.m_regs.set(Reg_flag::N, false);
@@ -630,8 +725,7 @@ void CP_A_HL_MCycle_1(DMG_CPU &m_cpu) {
 };
 void CP_A_HL_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
-    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
-    m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_regs.get(Reg_u8::temp_L)); // Performs to set flags, then discards the result
+    m_cpu.ALU_B8_SUBBER(m_cpu.m_regs.get(Reg_u8::A), m_cpu.m_Memory.Read()); // Performs to set flags, then discards the result
 };
 
 Opcode Opcode_xB8_CP_A_B = { { CP_A_N_MCycle_1<Reg_u8::B> }, 1 };

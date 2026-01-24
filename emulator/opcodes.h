@@ -45,6 +45,13 @@ extern Opcode Opcode_xCA_JP_Z;
 extern Opcode Opcode_xD2_JP_NC;
 extern Opcode Opcode_xDA_JP_C;
 
+// ----------------- Calls -----------------
+extern Opcode Opcode_xCD_CALL;
+extern Opcode Opcode_xC4_CALL_NZ;
+extern Opcode Opcode_xCC_CALL_Z;
+extern Opcode Opcode_xD4_CALL_NC;
+extern Opcode Opcode_xDC_CALL_C;
+
 // ----------------- Returns -----------------
 extern Opcode Opcode_xC9_RET;
 extern Opcode Opcode_xC0_RET_NZ;
@@ -167,6 +174,24 @@ extern Opcode Opcode_x8C_ADC_A_H;
 extern Opcode Opcode_x8D_ADC_A_L;
 extern Opcode Opcode_x8E_ADC_A_HL;
 extern Opcode Opcode_x8F_ADC_A_A;
+
+extern Opcode Opcode_x04_INC_B;
+extern Opcode Opcode_x0C_INC_C;
+extern Opcode Opcode_x14_INC_D;
+extern Opcode Opcode_x1C_INC_E;
+extern Opcode Opcode_x24_INC_H;
+extern Opcode Opcode_x2C_INC_L;
+extern Opcode Opcode_x34_INC_HL;
+extern Opcode Opcode_x3C_INC_A;
+
+extern Opcode Opcode_x05_DEC_B;
+extern Opcode Opcode_x0D_DEC_C;
+extern Opcode Opcode_x15_DEC_D;
+extern Opcode Opcode_x1D_DEC_E;
+extern Opcode Opcode_x25_DEC_HL;
+extern Opcode Opcode_x2D_DEC_L;
+extern Opcode Opcode_x35_DEC_H;
+extern Opcode Opcode_x3D_DEC_A;
 
 // ----------------- 8 bit Subtraction -----------------
 extern Opcode Opcode_x90_SUB_A_B;

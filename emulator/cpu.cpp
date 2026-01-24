@@ -73,39 +73,55 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x01: return &Opcode_x01_LD_BC_N16;
         case 0x02: return &Opcode_x02_LD_BC_A;
         case 0x03: return &Opcode_x03_INC_BC;
+        case 0x04: return &Opcode_x04_INC_B;
+        case 0x05: return &Opcode_x05_DEC_B;
 
         case 0x0A: return &Opcode_x0A_LD_BC_A;
         case 0x0B: return &Opcode_x0B_DEC_BC;
+        case 0x0C: return &Opcode_x0C_INC_C;
+        case 0x0D: return &Opcode_x0D_DEC_C;
 
         case 0x10: return &Opcode_x10_STOP;
         case 0x11: return &Opcode_x11_LD_DE_N16;
         case 0x12: return &Opcode_x12_LD_DE_A;
         case 0x13: return &Opcode_x13_INC_DE;
+        case 0x14: return &Opcode_x14_INC_D;
+        case 0x15: return &Opcode_x15_DEC_D;
 
         case 0x18: return &Opcode_x18_JR;
 
         case 0x1A: return &Opcode_x1A_LD_DE_A;
         case 0x1B: return &Opcode_x1B_DEC_DE;
+        case 0x1C: return &Opcode_x1C_INC_E;
+        case 0x1D: return &Opcode_x1D_DEC_E;
 
         case 0x20: return &Opcode_x20_JR_NZ;
         case 0x21: return &Opcode_x21_LD_HL_N16;
         case 0x22: return &Opcode_x22_LD_HLI_A;
         case 0x23: return &Opcode_x23_INC_HL;
+        case 0x24: return &Opcode_x24_INC_H;
+        case 0x25: return &Opcode_x25_DEC_HL;
 
         case 0x28: return &Opcode_x28_JR_Z;
 
         case 0x2A: return &Opcode_x2A_LD_HLI_A;
         case 0x2B: return &Opcode_x2B_DEC_HL;
+        case 0x2C: return &Opcode_x2C_INC_L;
+        case 0x2D: return &Opcode_x2D_DEC_L;
 
         case 0x30: return &Opcode_x30_JR_NC;
         case 0x31: return &Opcode_x31_LD_SP_N16;
         case 0x32: return &Opcode_x32_LD_HLD_A;
         case 0x33: return &Opcode_x33_INC_SP;
+        case 0x34: return &Opcode_x34_INC_HL;
+        case 0x35: return &Opcode_x35_DEC_H;
 
         case 0x38: return &Opcode_x38_JR_C;
 
         case 0x3A: return &Opcode_x3A_LD_HLD_A;
         case 0x3B: return &Opcode_x3B_DEC_SP;
+        case 0x3C: return &Opcode_x3C_INC_A;
+        case 0x3D: return &Opcode_x3D_DEC_A;
 
         case 0x40: return &Opcode_x40_LD_B_B;
         case 0x41: return &Opcode_x41_LD_B_C;
@@ -239,25 +255,28 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xC1: return &Opcode_xC1_PUSH_BC;
         case 0xC2: return &Opcode_xC2_JP_NZ;
         case 0xC3: return &Opcode_xC3_JP;
-
+        case 0xC4: return &Opcode_xC4_CALL_NZ;
         case 0xC5: return &Opcode_xC5_POP_BC;
 
         case 0xC8: return &Opcode_xC8_RET_Z;
         case 0xC9: return &Opcode_xC9_RET;
         case 0xCA: return &Opcode_xCA_JP_Z;
 
+        case 0xCC: return &Opcode_xCC_CALL_Z;
+        case 0xCD: return &Opcode_xCD_CALL;
+
         case 0xD0: return &Opcode_xD0_RET_NC;
         case 0xD1: return &Opcode_xD1_PUSH_DE;
         case 0xD2: return &Opcode_xD2_JP_NC;
         case 0xD3: return &Opcode_xD3_INVALID;
-
+        case 0xD4: return &Opcode_xD4_CALL_NC;
         case 0xD5: return &Opcode_xD5_POP_DE;
 
         case 0xD8: return &Opcode_xD8_RET_C;
         case 0xD9: return &Opcode_xD9_RETI;
         case 0xDA: return &Opcode_xDA_JP_C;
         case 0xDB: return &Opcode_xDB_INVALID;
-
+        case 0xDC: return &Opcode_xDC_CALL_C;
         case 0xDD: return &Opcode_xDD_INVALID;
 
         case 0xE0: return &Opcode_xE0_LDH_A8_A;
