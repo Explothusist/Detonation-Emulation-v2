@@ -20,6 +20,10 @@ extern Opcode Opcode_x10_STOP;
 extern Opcode Opcode_x76_HALT;
 extern Opcode Opcode_xF3_DI;
 extern Opcode Opcode_xFB_EI;
+extern Opcode Opcode_x27_DAA;
+extern Opcode Opcode_x2F_CPL;
+extern Opcode Opcode_x37_SCF;
+extern Opcode Opcode_x3F_CCF;
 
 // ----------------- Push and Pop b16 -----------------
 extern Opcode Opcode_xC1_PUSH_BC;
@@ -134,6 +138,15 @@ extern Opcode Opcode_x7E_LD_A_HL;
 extern Opcode Opcode_x7F_LD_A_A;
 
 // ----------------- Special 8 bit Loads -----------------
+extern Opcode Opcode_x06_LD_B_N8;
+extern Opcode Opcode_x0E_LD_C_N8;
+extern Opcode Opcode_x16_LD_D_N8;
+extern Opcode Opcode_x1E_LD_E_N8;
+extern Opcode Opcode_x26_LD_H_N8;
+extern Opcode Opcode_x2E_LD_L_N8;
+extern Opcode Opcode_x36_LD_HL_N8;
+extern Opcode Opcode_x3E_LD_A_N8;
+
 extern Opcode Opcode_xE0_LDH_A8_A;
 extern Opcode Opcode_xF0_LDH_A_A8;
 
@@ -165,6 +178,7 @@ extern Opcode Opcode_x84_ADD_A_H;
 extern Opcode Opcode_x85_ADD_A_L;
 extern Opcode Opcode_x86_ADD_A_HL;
 extern Opcode Opcode_x87_ADD_A_A;
+extern Opcode Opcode_xC6_ADD_A_N8;
 
 extern Opcode Opcode_x88_ADC_A_B;
 extern Opcode Opcode_x89_ADC_A_C;
@@ -174,6 +188,7 @@ extern Opcode Opcode_x8C_ADC_A_H;
 extern Opcode Opcode_x8D_ADC_A_L;
 extern Opcode Opcode_x8E_ADC_A_HL;
 extern Opcode Opcode_x8F_ADC_A_A;
+extern Opcode Opcode_xCE_ADC_A_N8;
 
 extern Opcode Opcode_x04_INC_B;
 extern Opcode Opcode_x0C_INC_C;
@@ -202,6 +217,7 @@ extern Opcode Opcode_x94_SUB_A_H;
 extern Opcode Opcode_x95_SUB_A_L;
 extern Opcode Opcode_x96_SUB_A_HL;
 extern Opcode Opcode_x97_SUB_A_A;
+extern Opcode Opcode_xD6_SUB_A_N8;
 
 extern Opcode Opcode_x98_SBC_A_B;
 extern Opcode Opcode_x99_SBC_A_C;
@@ -211,6 +227,7 @@ extern Opcode Opcode_x9C_SBC_A_H;
 extern Opcode Opcode_x9D_SBC_A_L;
 extern Opcode Opcode_x9E_SBC_A_HL;
 extern Opcode Opcode_x9F_SBC_A_A;
+extern Opcode Opcode_xDE_SBC_A_N8;
 
 // ----------------- 8 bit Bit Operations -----------------
 extern Opcode Opcode_xA0_AND_A_B;
@@ -221,6 +238,7 @@ extern Opcode Opcode_xA4_AND_A_H;
 extern Opcode Opcode_xA5_AND_A_L;
 extern Opcode Opcode_xA6_AND_A_HL;
 extern Opcode Opcode_xA7_AND_A_A;
+extern Opcode Opcode_xE6_AND_A_N8;
 
 extern Opcode Opcode_xA8_XOR_A_B;
 extern Opcode Opcode_xA9_XOR_A_C;
@@ -230,6 +248,7 @@ extern Opcode Opcode_xAC_XOR_A_H;
 extern Opcode Opcode_xAD_XOR_A_L;
 extern Opcode Opcode_xAE_XOR_A_HL;
 extern Opcode Opcode_xAF_XOR_A_A;
+extern Opcode Opcode_xEE_XOR_A_N8;
 
 extern Opcode Opcode_xB0_OR_A_B;
 extern Opcode Opcode_xB1_OR_A_C;
@@ -239,6 +258,7 @@ extern Opcode Opcode_xB4_OR_A_H;
 extern Opcode Opcode_xB5_OR_A_L;
 extern Opcode Opcode_xB6_OR_A_HL;
 extern Opcode Opcode_xB7_OR_A_A;
+extern Opcode Opcode_xF6_OR_A_N8;
 
 extern Opcode Opcode_xB8_CP_A_B;
 extern Opcode Opcode_xB9_CP_A_C;
@@ -248,6 +268,12 @@ extern Opcode Opcode_xBC_CP_A_H;
 extern Opcode Opcode_xBD_CP_A_L;
 extern Opcode Opcode_xBE_CP_A_HL;
 extern Opcode Opcode_xBF_CP_A_A;
+extern Opcode Opcode_xFE_CP_A_N8;
+
+extern Opcode Opcode_x07_RLCA;
+extern Opcode Opcode_x0F_RRCA;
+extern Opcode Opcode_x17_RLA;
+extern Opcode Opcode_x1F_RRA;
 
 // ----------------- 16 bit Addition -----------------
 extern Opcode Opcode_x03_INC_BC;
