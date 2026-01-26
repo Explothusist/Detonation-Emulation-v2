@@ -77,7 +77,8 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x05: return &Opcode_x05_DEC_B;
         case 0x06: return &Opcode_x06_LD_B_N8;
         case 0x07: return &Opcode_x07_RLCA;
-
+        case 0x08: return &Opcode_x08_LD_NN_SP;
+        case 0x09: return &Opcode_x09_ADD_HL_BC;
         case 0x0A: return &Opcode_x0A_LD_BC_A;
         case 0x0B: return &Opcode_x0B_DEC_BC;
         case 0x0C: return &Opcode_x0C_INC_C;
@@ -93,7 +94,7 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x16: return &Opcode_x16_LD_D_N8;
         case 0x17: return &Opcode_x17_RLA;
         case 0x18: return &Opcode_x18_JR;
-
+        case 0x19: return &Opcode_x19_ADD_HL_DE;
         case 0x1A: return &Opcode_x1A_LD_DE_A;
         case 0x1B: return &Opcode_x1B_DEC_DE;
         case 0x1C: return &Opcode_x1C_INC_E;
@@ -109,7 +110,7 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x26: return &Opcode_x26_LD_H_N8;
         case 0x27: return &Opcode_x27_DAA;
         case 0x28: return &Opcode_x28_JR_Z;
-
+        case 0x29: return &Opcode_x29_ADD_HL_HL;
         case 0x2A: return &Opcode_x2A_LD_HLI_A;
         case 0x2B: return &Opcode_x2B_DEC_HL;
         case 0x2C: return &Opcode_x2C_INC_L;
@@ -125,7 +126,7 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x36: return &Opcode_x36_LD_HL_N8;
         case 0x37: return &Opcode_x37_SCF;
         case 0x38: return &Opcode_x38_JR_C;
-
+        case 0x39: return &Opcode_x39_ADD_HL_SP;
         case 0x3A: return &Opcode_x3A_LD_HLD_A;
         case 0x3B: return &Opcode_x3B_DEC_SP;
         case 0x3C: return &Opcode_x3C_INC_A;
@@ -267,15 +268,16 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xC4: return &Opcode_xC4_CALL_NZ;
         case 0xC5: return &Opcode_xC5_POP_BC;
         case 0xC6: return &Opcode_xC6_ADD_A_N8;
-
+        case 0xC7: return &Opcode_xC7_RST_00;
         case 0xC8: return &Opcode_xC8_RET_Z;
         case 0xC9: return &Opcode_xC9_RET;
         case 0xCA: return &Opcode_xCA_JP_Z;
 
+
         case 0xCC: return &Opcode_xCC_CALL_Z;
         case 0xCD: return &Opcode_xCD_CALL;
         case 0xCE: return &Opcode_xCE_ADC_A_N8;
-
+        case 0xCF: return &Opcode_xCF_RST_08;
         case 0xD0: return &Opcode_xD0_RET_NC;
         case 0xD1: return &Opcode_xD1_PUSH_DE;
         case 0xD2: return &Opcode_xD2_JP_NC;
@@ -283,7 +285,7 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xD4: return &Opcode_xD4_CALL_NC;
         case 0xD5: return &Opcode_xD5_POP_DE;
         case 0xD6: return &Opcode_xD6_SUB_A_N8;
-
+        case 0xD7: return &Opcode_xD7_RST_10;
         case 0xD8: return &Opcode_xD8_RET_C;
         case 0xD9: return &Opcode_xD9_RETI;
         case 0xDA: return &Opcode_xDA_JP_C;
@@ -291,7 +293,7 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xDC: return &Opcode_xDC_CALL_C;
         case 0xDD: return &Opcode_xDD_INVALID;
         case 0xDE: return &Opcode_xDE_SBC_A_N8;
-
+        case 0xDF: return &Opcode_xDF_RST_18;
         case 0xE0: return &Opcode_xE0_LDH_A8_A;
         case 0xE1: return &Opcode_xE1_PUSH_HL;
         case 0xE2: return &Opcode_xE2_LDH_C_A;
@@ -299,12 +301,15 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xE4: return &Opcode_xE4_INVALID;
         case 0xE5: return &Opcode_xE5_POP_HL;
         case 0xE6: return &Opcode_xE6_AND_A_N8;
+        case 0xE7: return &Opcode_xE7_RST_20;
+        case 0xE8: return &Opcode_xE8_ADD_SP_N;
+        case 0xE9: return &Opcode_xE9_JP_HL;
 
         case 0xEB: return &Opcode_xEB_INVALID;
         case 0xEC: return &Opcode_xEC_INVALID;
         case 0xED: return &Opcode_xED_INVALID;
         case 0xEE: return &Opcode_xEE_XOR_A_N8;
-
+        case 0xEF: return &Opcode_xEF_RST_28;
         case 0xF0: return &Opcode_xF0_LDH_A_A8;
         case 0xF1: return &Opcode_xF1_PUSH_AF;
         case 0xF2: return &Opcode_xF2_LDH_A_C;
@@ -312,12 +317,15 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xF4: return &Opcode_xF4_INVALID;
         case 0xF5: return &Opcode_xF5_POP_AF;
         case 0xF6: return &Opcode_xF6_OR_A_N8;
+        case 0xF7: return &Opcode_xF7_RST_30;
+        case 0xF8: return &Opcode_xF8_LD_HL_SP_N;
+        case 0xF9: return &Opcode_xF9_LD_SP_HL;
 
         case 0xFB: return &Opcode_xFB_EI;
         case 0xFC: return &Opcode_xFC_INVALID;
         case 0xFD: return &Opcode_xFD_INVALID;
         case 0xFE: return &Opcode_xFE_CP_A_N8;
-
+        case 0xFF: return &Opcode_xFF_RST_38;
         default: return &Opcode_xZZ_UNIMPLEMENTED;
     }
 };

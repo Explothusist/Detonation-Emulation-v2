@@ -25,6 +25,12 @@ extern Opcode Opcode_x2F_CPL;
 extern Opcode Opcode_x37_SCF;
 extern Opcode Opcode_x3F_CCF;
 
+// ----------------- Stack Special -----------------
+extern Opcode Opcode_x08_LD_NN_SP;
+extern Opcode Opcode_xE8_ADD_SP_N;
+extern Opcode Opcode_xF8_LD_HL_SP_N;
+extern Opcode Opcode_xF9_LD_SP_HL;
+
 // ----------------- Push and Pop b16 -----------------
 extern Opcode Opcode_xC1_PUSH_BC;
 extern Opcode Opcode_xC5_POP_BC;
@@ -48,6 +54,7 @@ extern Opcode Opcode_xC2_JP_NZ;
 extern Opcode Opcode_xCA_JP_Z;
 extern Opcode Opcode_xD2_JP_NC;
 extern Opcode Opcode_xDA_JP_C;
+extern Opcode Opcode_xE9_JP_HL;
 
 // ----------------- Calls -----------------
 extern Opcode Opcode_xCD_CALL;
@@ -55,6 +62,16 @@ extern Opcode Opcode_xC4_CALL_NZ;
 extern Opcode Opcode_xCC_CALL_Z;
 extern Opcode Opcode_xD4_CALL_NC;
 extern Opcode Opcode_xDC_CALL_C;
+
+// ----------------- Resets -----------------
+extern Opcode Opcode_xC7_RST_00;
+extern Opcode Opcode_xCF_RST_08;
+extern Opcode Opcode_xD7_RST_10;
+extern Opcode Opcode_xDF_RST_18;
+extern Opcode Opcode_xE7_RST_20;
+extern Opcode Opcode_xEF_RST_28;
+extern Opcode Opcode_xF7_RST_30;
+extern Opcode Opcode_xFF_RST_38;
 
 // ----------------- Returns -----------------
 extern Opcode Opcode_xC9_RET;
@@ -285,6 +302,11 @@ extern Opcode Opcode_x0B_DEC_BC;
 extern Opcode Opcode_x1B_DEC_DE;
 extern Opcode Opcode_x2B_DEC_HL;
 extern Opcode Opcode_x3B_DEC_SP;
+
+extern Opcode Opcode_x09_ADD_HL_BC;
+extern Opcode Opcode_x19_ADD_HL_DE;
+extern Opcode Opcode_x29_ADD_HL_HL;
+extern Opcode Opcode_x39_ADD_HL_SP;
 
 // ----------------- Invalid -----------------
 extern Opcode Opcode_xD3_INVALID;
