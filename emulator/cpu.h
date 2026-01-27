@@ -25,7 +25,9 @@ class DMG_CPU {
         void Initialize(bool use_boot_rom);
 
         Opcode* parseOpcode(uint8_t opcode);
+        Opcode* parseCBOpcode(uint8_t opcode);
         void clearOpcode(); // So that variable length ones can fix themselves
+        void loadCBOpcode();
         void runMCycle();
         void runTCycle();
 

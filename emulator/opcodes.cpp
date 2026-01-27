@@ -114,6 +114,11 @@ void CCF_MCycle_1(DMG_CPU &m_cpu) {
 Opcode Opcode_x37_SCF = { { SCF_MCycle_1 }, 1 };
 Opcode Opcode_x3F_CCF = { { CCF_MCycle_1 }, 1 };
 
+void CB_Prefix_MCycle_1(DMG_CPU &m_cpu) {
+    m_cpu.loadCBOpcode();
+};
+Opcode Opcode_xCB_CB_PREFIX = { { CB_Prefix_MCycle_1 }, 1 };
+
 
 // ----------------- Stack Special -----------------
 void LD_NN_SP_MCycle_1(DMG_CPU &m_cpu) {
@@ -857,6 +862,45 @@ Opcode Opcode_x9F_SBC_A_A = { { SBC_A_N_MCycle_1<Reg_u8::A> }, 1 };
 Opcode Opcode_xDE_SBC_A_N8 = { { SBC_A_N8_MCycle_1, SBC_A_N8_MCycle_2 }, 2 };
 
 
+// ----------------- 16 bit Addition -----------------
+template<Reg_u16 REG, int INC>
+void INC_NN_MCycle_1(DMG_CPU &m_cpu) {
+    // Wait for bus to be freed (because it uses post-increment)
+};
+template<Reg_u16 REG, int INC>
+void INC_NN_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_regs.set(REG, m_cpu.m_regs.get(REG) + INC);
+};
+
+Opcode Opcode_x03_INC_BC = { { INC_NN_MCycle_1<Reg_u16::BC, 1>, INC_NN_MCycle_2<Reg_u16::BC, 1> }, 2 };
+Opcode Opcode_x13_INC_DE = { { INC_NN_MCycle_1<Reg_u16::DE, 1>, INC_NN_MCycle_2<Reg_u16::DE, 1> }, 2 };
+Opcode Opcode_x23_INC_HL = { { INC_NN_MCycle_1<Reg_u16::HL, 1>, INC_NN_MCycle_2<Reg_u16::HL, 1> }, 2 };
+Opcode Opcode_x33_INC_SP = { { INC_NN_MCycle_1<Reg_u16::SP, 1>, INC_NN_MCycle_2<Reg_u16::SP, 1> }, 2 };
+
+Opcode Opcode_x0B_DEC_BC = { { INC_NN_MCycle_1<Reg_u16::BC, 1>, INC_NN_MCycle_2<Reg_u16::BC, -1> }, 2 };
+Opcode Opcode_x1B_DEC_DE = { { INC_NN_MCycle_1<Reg_u16::DE, 1>, INC_NN_MCycle_2<Reg_u16::DE, -1> }, 2 };
+Opcode Opcode_x2B_DEC_HL = { { INC_NN_MCycle_1<Reg_u16::HL, 1>, INC_NN_MCycle_2<Reg_u16::HL, -1> }, 2 };
+Opcode Opcode_x3B_DEC_SP = { { INC_NN_MCycle_1<Reg_u16::SP, 1>, INC_NN_MCycle_2<Reg_u16::SP, -1> }, 2 };
+
+template<Reg_u8 REG_H, Reg_u8 REG_L>
+void ADD_HL_NN_MCycle_1(DMG_CPU &m_cpu) {
+    bool z_flag = m_cpu.m_regs.get(Reg_flag::Z);
+    m_cpu.m_regs.set(Reg_u8::L, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::L), m_cpu.m_regs.get(REG_L)));
+    m_cpu.m_regs.set(Reg_flag::Z, z_flag);
+};
+template<Reg_u8 REG_H, Reg_u8 REG_L>
+void ADD_HL_NN_MCycle_2(DMG_CPU &m_cpu) {
+    bool z_flag = m_cpu.m_regs.get(Reg_flag::Z);
+    m_cpu.m_regs.set(Reg_u8::H, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::H), m_cpu.m_regs.get(REG_H), m_cpu.m_regs.get(Reg_flag::C)));
+    m_cpu.m_regs.set(Reg_flag::Z, z_flag);
+};
+
+Opcode Opcode_x09_ADD_HL_BC = { { ADD_HL_NN_MCycle_1<Reg_u8::B, Reg_u8::C>, ADD_HL_NN_MCycle_2<Reg_u8::B, Reg_u8::C> }, 2 };
+Opcode Opcode_x19_ADD_HL_DE = { { ADD_HL_NN_MCycle_1<Reg_u8::D, Reg_u8::E>, ADD_HL_NN_MCycle_2<Reg_u8::D, Reg_u8::E> }, 2 };
+Opcode Opcode_x29_ADD_HL_HL = { { ADD_HL_NN_MCycle_1<Reg_u8::H, Reg_u8::L>, ADD_HL_NN_MCycle_2<Reg_u8::H, Reg_u8::L> }, 2 };
+Opcode Opcode_x39_ADD_HL_SP = { { ADD_HL_NN_MCycle_1<Reg_u8::SP_H, Reg_u8::SP_L>, ADD_HL_NN_MCycle_2<Reg_u8::SP_H, Reg_u8::SP_L> }, 2 };
+
+
 // ----------------- 8 bit Bit Operations -----------------
 template<Reg_u8 REG>
 void AND_A_N_MCycle_1(DMG_CPU &m_cpu) {
@@ -1015,88 +1059,74 @@ Opcode Opcode_xBE_CP_A_HL = { { CP_A_HL_MCycle_1, CP_A_HL_MCycle_2 }, 2 };
 Opcode Opcode_xBF_CP_A_A = { { CP_A_N_MCycle_1<Reg_u8::A> }, 1 };
 Opcode Opcode_xFE_CP_A_N8 = { { CP_A_N8_MCycle_1, CP_A_N8_MCycle_2 }, 2 };
 
-void RLCA_MCycle_1(DMG_CPU &m_cpu) {
-    uint8_t old_a = m_cpu.m_regs.get(Reg_u8::A);
+template<Reg_u8 REG>
+void RLC_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
     uint8_t bit_7 = (old_a >> 7) & 1;
-    m_cpu.m_regs.set(Reg_u8::A, (old_a << 1) | bit_7);
-    m_cpu.m_regs.set(Reg_flag::Z, false);
+    uint8_t new_a = (old_a << 1) | bit_7;
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
     m_cpu.m_regs.set(Reg_flag::N, false);
     m_cpu.m_regs.set(Reg_flag::H, false);
     m_cpu.m_regs.set(Reg_flag::C, (bit_7 == 1));
+};
+template<Reg_u8 REG>
+void RL_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
+    uint8_t bit_7 = (old_a >> 7) & 1;
+    uint8_t bit_8 = m_cpu.m_regs.get(Reg_flag::C);
+    uint8_t new_a = (old_a << 1) | bit_8;
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, false);
+    m_cpu.m_regs.set(Reg_flag::C, (bit_7 == 1));
+};
+template<Reg_u8 REG>
+void RRC_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
+    uint8_t bit_0 = old_a & 1;
+    uint8_t new_a = (old_a >> 1) | (bit_0 << 7);
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, false);
+    m_cpu.m_regs.set(Reg_flag::C, (bit_0 == 1));
+};
+template<Reg_u8 REG>
+void RR_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
+    uint8_t bit_0 = old_a & 1;
+    uint8_t bit_8 = m_cpu.m_regs.get(Reg_flag::C);
+    uint8_t new_a = (old_a >> 1) | (bit_8 << 7);
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, false);
+    m_cpu.m_regs.set(Reg_flag::C, (bit_0 == 1));
+};
+
+void RLCA_MCycle_1(DMG_CPU &m_cpu) {
+    RLC_N_MCycle_1<Reg_u8::A>(m_cpu);
+    m_cpu.m_regs.set(Reg_flag::Z, false);
 };
 void RLA_MCycle_1(DMG_CPU &m_cpu) {
-    uint8_t old_a = m_cpu.m_regs.get(Reg_u8::A);
-    uint8_t bit_7 = (old_a >> 7) & 1;
-    uint8_t bit_8 = m_cpu.m_regs.get(Reg_flag::C);
-    m_cpu.m_regs.set(Reg_u8::A, (old_a << 1) | bit_8);
+    RL_N_MCycle_1<Reg_u8::A>(m_cpu);
     m_cpu.m_regs.set(Reg_flag::Z, false);
-    m_cpu.m_regs.set(Reg_flag::N, false);
-    m_cpu.m_regs.set(Reg_flag::H, false);
-    m_cpu.m_regs.set(Reg_flag::C, (bit_7 == 1));
 };
 void RRCA_MCycle_1(DMG_CPU &m_cpu) {
-    uint8_t old_a = m_cpu.m_regs.get(Reg_u8::A);
-    uint8_t bit_0 = old_a & 1;
-    m_cpu.m_regs.set(Reg_u8::A, (old_a >> 1) | (bit_0 << 7));
+    RRC_N_MCycle_1<Reg_u8::A>(m_cpu);
     m_cpu.m_regs.set(Reg_flag::Z, false);
-    m_cpu.m_regs.set(Reg_flag::N, false);
-    m_cpu.m_regs.set(Reg_flag::H, false);
-    m_cpu.m_regs.set(Reg_flag::C, (bit_0 == 1));
 };
-void RRA_MCycle_1(DMG_CPU &m_cpu) {
-    uint8_t old_a = m_cpu.m_regs.get(Reg_u8::A);
-    uint8_t bit_0 = old_a & 1;
-    uint8_t bit_8 = m_cpu.m_regs.get(Reg_flag::C);
-    m_cpu.m_regs.set(Reg_u8::A, (old_a >> 1) | (bit_8 << 7));
+void RRA_N_MCycle_1(DMG_CPU &m_cpu) {
+    RR_N_MCycle_1<Reg_u8::A>(m_cpu);
     m_cpu.m_regs.set(Reg_flag::Z, false);
-    m_cpu.m_regs.set(Reg_flag::N, false);
-    m_cpu.m_regs.set(Reg_flag::H, false);
-    m_cpu.m_regs.set(Reg_flag::C, (bit_0 == 1));
 };
 
 Opcode Opcode_x07_RLCA = { { RLCA_MCycle_1 }, 1 };
 Opcode Opcode_x0F_RRCA = { { RRCA_MCycle_1 }, 1 };
 Opcode Opcode_x17_RLA = { { RLA_MCycle_1 }, 1 };
-Opcode Opcode_x1F_RRA = { { RRA_MCycle_1 }, 1 };
-
-
-// ----------------- 16 bit Addition -----------------
-template<Reg_u16 REG, int INC>
-void INC_NN_MCycle_1(DMG_CPU &m_cpu) {
-    // Wait for bus to be freed (because it uses post-increment)
-};
-template<Reg_u16 REG, int INC>
-void INC_NN_MCycle_2(DMG_CPU &m_cpu) {
-    m_cpu.m_regs.set(REG, m_cpu.m_regs.get(REG) + INC);
-};
-
-Opcode Opcode_x03_INC_BC = { { INC_NN_MCycle_1<Reg_u16::BC, 1>, INC_NN_MCycle_2<Reg_u16::BC, 1> }, 2 };
-Opcode Opcode_x13_INC_DE = { { INC_NN_MCycle_1<Reg_u16::DE, 1>, INC_NN_MCycle_2<Reg_u16::DE, 1> }, 2 };
-Opcode Opcode_x23_INC_HL = { { INC_NN_MCycle_1<Reg_u16::HL, 1>, INC_NN_MCycle_2<Reg_u16::HL, 1> }, 2 };
-Opcode Opcode_x33_INC_SP = { { INC_NN_MCycle_1<Reg_u16::SP, 1>, INC_NN_MCycle_2<Reg_u16::SP, 1> }, 2 };
-
-Opcode Opcode_x0B_DEC_BC = { { INC_NN_MCycle_1<Reg_u16::BC, 1>, INC_NN_MCycle_2<Reg_u16::BC, -1> }, 2 };
-Opcode Opcode_x1B_DEC_DE = { { INC_NN_MCycle_1<Reg_u16::DE, 1>, INC_NN_MCycle_2<Reg_u16::DE, -1> }, 2 };
-Opcode Opcode_x2B_DEC_HL = { { INC_NN_MCycle_1<Reg_u16::HL, 1>, INC_NN_MCycle_2<Reg_u16::HL, -1> }, 2 };
-Opcode Opcode_x3B_DEC_SP = { { INC_NN_MCycle_1<Reg_u16::SP, 1>, INC_NN_MCycle_2<Reg_u16::SP, -1> }, 2 };
-
-template<Reg_u8 REG_H, Reg_u8 REG_L>
-void ADD_HL_NN_MCycle_1(DMG_CPU &m_cpu) {
-    bool z_flag = m_cpu.m_regs.get(Reg_flag::Z);
-    m_cpu.m_regs.set(Reg_u8::L, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::L), m_cpu.m_regs.get(REG_L)));
-    m_cpu.m_regs.set(Reg_flag::Z, z_flag);
-};
-template<Reg_u8 REG_H, Reg_u8 REG_L>
-void ADD_HL_NN_MCycle_2(DMG_CPU &m_cpu) {
-    bool z_flag = m_cpu.m_regs.get(Reg_flag::Z);
-    m_cpu.m_regs.set(Reg_u8::H, m_cpu.ALU_B8_ADDER(m_cpu.m_regs.get(Reg_u8::H), m_cpu.m_regs.get(REG_H), m_cpu.m_regs.get(Reg_flag::C)));
-    m_cpu.m_regs.set(Reg_flag::Z, z_flag);
-};
-
-Opcode Opcode_x09_ADD_HL_BC = { { ADD_HL_NN_MCycle_1<Reg_u8::B, Reg_u8::C>, ADD_HL_NN_MCycle_2<Reg_u8::B, Reg_u8::C> }, 2 };
-Opcode Opcode_x19_ADD_HL_DE = { { ADD_HL_NN_MCycle_1<Reg_u8::D, Reg_u8::E>, ADD_HL_NN_MCycle_2<Reg_u8::D, Reg_u8::E> }, 2 };
-Opcode Opcode_x29_ADD_HL_HL = { { ADD_HL_NN_MCycle_1<Reg_u8::H, Reg_u8::L>, ADD_HL_NN_MCycle_2<Reg_u8::H, Reg_u8::L> }, 2 };
-Opcode Opcode_x39_ADD_HL_SP = { { ADD_HL_NN_MCycle_1<Reg_u8::SP_H, Reg_u8::SP_L>, ADD_HL_NN_MCycle_2<Reg_u8::SP_H, Reg_u8::SP_L> }, 2 };
+Opcode Opcode_x1F_RRA = { { RRA_N_MCycle_1 }, 1 };
 
 
 // ----------------- Invalid -----------------
@@ -1119,15 +1149,398 @@ Opcode Opcode_xFC_INVALID = { { INVALID_MCycle_1<0xFC> }, 1 };
 Opcode Opcode_xFD_INVALID = { { INVALID_MCycle_1<0xFD> }, 1 };
 
 
+// ----------------- CB Opcodes -----------------
+void CB_HL_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits for bus to be free
+};
+void CB_HL_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
+};
+template<MCycleFn Opcode>
+void CB_HL_MCycle_3(DMG_CPU &m_cpu) {
+    Opcode(m_cpu);
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
+    m_cpu.m_Memory.Write(m_cpu.m_regs.get(Reg_u8::temp_L));
+};
+
+Opcode Opcode_CB_x00_RLC_B = { { RLC_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x01_RLC_C = { { RLC_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x02_RLC_D = { { RLC_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x03_RLC_E = { { RLC_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x04_RLC_H = { { RLC_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x05_RLC_L = { { RLC_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x06_RLC_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RLC_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x07_RLC_A = { { RLC_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x08_RRC_B = { { RRC_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x09_RRC_C = { { RRC_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x0A_RRC_D = { { RRC_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x0B_RRC_E = { { RRC_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x0C_RRC_H = { { RRC_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x0D_RRC_L = { { RRC_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x0E_RRC_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RRC_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x0F_RRC_A = { { RRC_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x10_RL_B = { { RL_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x11_RL_C = { { RL_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x12_RL_D = { { RL_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x13_RL_E = { { RL_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x14_RL_H = { { RL_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x15_RL_L = { { RL_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x16_RL_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RL_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x17_RL_A = { { RL_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x18_RR_B = { { RR_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x19_RR_C = { { RR_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x1A_RR_D = { { RR_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x1B_RR_E = { { RR_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x1C_RR_H = { { RR_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x1D_RR_L = { { RR_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x1E_RR_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RR_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x1F_RR_A = { { RR_N_MCycle_1<Reg_u8::A> }, 1 };
+
+template<Reg_u8 REG>
+void SLA_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
+    uint8_t bit_7 = (old_a >> 7) & 1;
+    uint8_t new_a = (old_a << 1);
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, false);
+    m_cpu.m_regs.set(Reg_flag::C, (bit_7 == 1));
+};
+template<Reg_u8 REG>
+void SRA_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
+    uint8_t bit_7 = old_a & 0b1000'0000;
+    uint8_t bit_0 = old_a & 1;
+    uint8_t new_a = (old_a >> 1) | bit_7;
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, false);
+    m_cpu.m_regs.set(Reg_flag::C, (bit_0 == 1));
+};
+template<Reg_u8 REG>
+void SWAP_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
+    uint8_t new_a = (old_a << 4) | (old_a >> 4);
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, false);
+    m_cpu.m_regs.set(Reg_flag::C, false);
+};
+template<Reg_u8 REG>
+void SRL_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_a = m_cpu.m_regs.get(REG);
+    uint8_t bit_0 = old_a & 1;
+    uint8_t new_a = (old_a >> 1);
+    m_cpu.m_regs.set(REG, new_a);
+    m_cpu.m_regs.set(Reg_flag::Z, (new_a == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, false);
+    m_cpu.m_regs.set(Reg_flag::C, (bit_0 == 1));
+};
+
+Opcode Opcode_CB_x20_SLA_B = { { SLA_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x21_SLA_C = { { SLA_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x22_SLA_D = { { SLA_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x23_SLA_E = { { SLA_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x24_SLA_H = { { SLA_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x25_SLA_L = { { SLA_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x26_SLA_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SLA_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x27_SLA_A = { { SLA_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x28_SRA_B = { { SRA_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x29_SRA_C = { { SRA_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x2A_SRA_D = { { SRA_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x2B_SRA_E = { { SRA_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x2C_SRA_H = { { SRA_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x2D_SRA_L = { { SRA_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x2E_SRA_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SRA_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x2F_SRA_A = { { SRA_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x30_SWAP_B = { { SWAP_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x31_SWAP_C = { { SWAP_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x32_SWAP_D = { { SWAP_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x33_SWAP_E = { { SWAP_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x34_SWAP_H = { { SWAP_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x35_SWAP_L = { { SWAP_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x36_SWAP_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SWAP_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x37_SWAP_A = { { SWAP_N_MCycle_1<Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x38_SRL_B = { { SRL_N_MCycle_1<Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x39_SRL_C = { { SRL_N_MCycle_1<Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x3A_SRL_D = { { SRL_N_MCycle_1<Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x3B_SRL_E = { { SRL_N_MCycle_1<Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x3C_SRL_H = { { SRL_N_MCycle_1<Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x3D_SRL_L = { { SRL_N_MCycle_1<Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x3E_SRL_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SRL_N_MCycle_1<Reg_u8::temp_L>> }, 3 };
+Opcode Opcode_CB_x3F_SRL_A = { { SRL_N_MCycle_1<Reg_u8::A> }, 1 };
+
+template<int BIT, Reg_u8 REG>
+void BIT_X_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_reg = m_cpu.m_regs.get(REG);
+    uint8_t bit_x = (old_reg >> BIT) & 1;
+    m_cpu.m_regs.set(Reg_flag::Z, (bit_x == 0));
+    m_cpu.m_regs.set(Reg_flag::N, false);
+    m_cpu.m_regs.set(Reg_flag::H, true);
+};
+void CB_HL_BIT_MCycle_1(DMG_CPU &m_cpu) {
+    // Waits for bus to be free
+};
+template<MCycleFn Opcode>
+void CB_HL_BIT_MCycle_2(DMG_CPU &m_cpu) {
+    m_cpu.m_Memory.latchBus(m_cpu.m_regs.get(Reg_u16::HL));
+    m_cpu.m_regs.set(Reg_u8::temp_L, m_cpu.m_Memory.Read());
+    Opcode(m_cpu);
+};
+
+Opcode Opcode_CB_x40_BIT_0_B = { { BIT_X_N_MCycle_1<0, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x41_BIT_0_C = { { BIT_X_N_MCycle_1<0, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x42_BIT_0_D = { { BIT_X_N_MCycle_1<0, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x43_BIT_0_E = { { BIT_X_N_MCycle_1<0, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x44_BIT_0_H = { { BIT_X_N_MCycle_1<0, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x45_BIT_0_L = { { BIT_X_N_MCycle_1<0, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x46_BIT_0_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<0, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x47_BIT_0_A = { { BIT_X_N_MCycle_1<0, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x48_BIT_1_B = { { BIT_X_N_MCycle_1<1, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x49_BIT_1_C = { { BIT_X_N_MCycle_1<1, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x4A_BIT_1_D = { { BIT_X_N_MCycle_1<1, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x4B_BIT_1_E = { { BIT_X_N_MCycle_1<1, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x4C_BIT_1_H = { { BIT_X_N_MCycle_1<1, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x4D_BIT_1_L = { { BIT_X_N_MCycle_1<1, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x4E_BIT_1_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<1, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x4F_BIT_1_A = { { BIT_X_N_MCycle_1<1, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x50_BIT_2_B = { { BIT_X_N_MCycle_1<2, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x51_BIT_2_C = { { BIT_X_N_MCycle_1<2, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x52_BIT_2_D = { { BIT_X_N_MCycle_1<2, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x53_BIT_2_E = { { BIT_X_N_MCycle_1<2, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x54_BIT_2_H = { { BIT_X_N_MCycle_1<2, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x55_BIT_2_L = { { BIT_X_N_MCycle_1<2, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x56_BIT_2_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<2, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x57_BIT_2_A = { { BIT_X_N_MCycle_1<2, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x58_BIT_3_B = { { BIT_X_N_MCycle_1<3, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x59_BIT_3_C = { { BIT_X_N_MCycle_1<3, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x5A_BIT_3_D = { { BIT_X_N_MCycle_1<3, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x5B_BIT_3_E = { { BIT_X_N_MCycle_1<3, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x5C_BIT_3_H = { { BIT_X_N_MCycle_1<3, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x5D_BIT_3_L = { { BIT_X_N_MCycle_1<3, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x5E_BIT_3_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<3, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x5F_BIT_3_A = { { BIT_X_N_MCycle_1<3, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x60_BIT_4_B = { { BIT_X_N_MCycle_1<4, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x61_BIT_4_C = { { BIT_X_N_MCycle_1<4, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x62_BIT_4_D = { { BIT_X_N_MCycle_1<4, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x63_BIT_4_E = { { BIT_X_N_MCycle_1<4, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x64_BIT_4_H = { { BIT_X_N_MCycle_1<4, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x65_BIT_4_L = { { BIT_X_N_MCycle_1<4, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x66_BIT_4_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<4, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x67_BIT_4_A = { { BIT_X_N_MCycle_1<4, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x68_BIT_5_B = { { BIT_X_N_MCycle_1<5, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x69_BIT_5_C = { { BIT_X_N_MCycle_1<5, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x6A_BIT_5_D = { { BIT_X_N_MCycle_1<5, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x6B_BIT_5_E = { { BIT_X_N_MCycle_1<5, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x6C_BIT_5_H = { { BIT_X_N_MCycle_1<5, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x6D_BIT_5_L = { { BIT_X_N_MCycle_1<5, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x6E_BIT_5_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<5, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x6F_BIT_5_A = { { BIT_X_N_MCycle_1<5, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x70_BIT_6_B = { { BIT_X_N_MCycle_1<6, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x71_BIT_6_C = { { BIT_X_N_MCycle_1<6, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x72_BIT_6_D = { { BIT_X_N_MCycle_1<6, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x73_BIT_6_E = { { BIT_X_N_MCycle_1<6, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x74_BIT_6_H = { { BIT_X_N_MCycle_1<6, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x75_BIT_6_L = { { BIT_X_N_MCycle_1<6, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x76_BIT_6_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<6, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x77_BIT_6_A = { { BIT_X_N_MCycle_1<6, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x78_BIT_7_B = { { BIT_X_N_MCycle_1<7, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x79_BIT_7_C = { { BIT_X_N_MCycle_1<7, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x7A_BIT_7_D = { { BIT_X_N_MCycle_1<7, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x7B_BIT_7_E = { { BIT_X_N_MCycle_1<7, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x7C_BIT_7_H = { { BIT_X_N_MCycle_1<7, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x7D_BIT_7_L = { { BIT_X_N_MCycle_1<7, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x7E_BIT_7_HL = { { CB_HL_BIT_MCycle_1, CB_HL_BIT_MCycle_2<BIT_X_N_MCycle_1<7, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x7F_BIT_7_A = { { BIT_X_N_MCycle_1<7, Reg_u8::A> }, 1 };
+
+template<int BIT, Reg_u8 REG>
+void RES_X_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_reg = m_cpu.m_regs.get(REG);
+    uint8_t new_reg = old_reg & ~(1 << BIT);
+    m_cpu.m_regs.set(REG, new_reg);
+};
+
+Opcode Opcode_CB_x80_RES_0_B = { { RES_X_N_MCycle_1<0, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x81_RES_0_C = { { RES_X_N_MCycle_1<0, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x82_RES_0_D = { { RES_X_N_MCycle_1<0, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x83_RES_0_E = { { RES_X_N_MCycle_1<0, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x84_RES_0_H = { { RES_X_N_MCycle_1<0, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x85_RES_0_L = { { RES_X_N_MCycle_1<0, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x86_RES_0_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<0, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x87_RES_0_A = { { RES_X_N_MCycle_1<0, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x88_RES_1_B = { { RES_X_N_MCycle_1<1, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x89_RES_1_C = { { RES_X_N_MCycle_1<1, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x8A_RES_1_D = { { RES_X_N_MCycle_1<1, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x8B_RES_1_E = { { RES_X_N_MCycle_1<1, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x8C_RES_1_H = { { RES_X_N_MCycle_1<1, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x8D_RES_1_L = { { RES_X_N_MCycle_1<1, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x8E_RES_1_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<1, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x8F_RES_1_A = { { RES_X_N_MCycle_1<1, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x90_RES_2_B = { { RES_X_N_MCycle_1<2, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x91_RES_2_C = { { RES_X_N_MCycle_1<2, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x92_RES_2_D = { { RES_X_N_MCycle_1<2, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x93_RES_2_E = { { RES_X_N_MCycle_1<2, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x94_RES_2_H = { { RES_X_N_MCycle_1<2, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x95_RES_2_L = { { RES_X_N_MCycle_1<2, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x96_RES_2_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<2, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x97_RES_2_A = { { RES_X_N_MCycle_1<2, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_x98_RES_3_B = { { RES_X_N_MCycle_1<3, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_x99_RES_3_C = { { RES_X_N_MCycle_1<3, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_x9A_RES_3_D = { { RES_X_N_MCycle_1<3, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_x9B_RES_3_E = { { RES_X_N_MCycle_1<3, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_x9C_RES_3_H = { { RES_X_N_MCycle_1<3, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_x9D_RES_3_L = { { RES_X_N_MCycle_1<3, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_x9E_RES_3_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<3, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_x9F_RES_3_A = { { RES_X_N_MCycle_1<3, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xA0_RES_4_B = { { RES_X_N_MCycle_1<4, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xA1_RES_4_C = { { RES_X_N_MCycle_1<4, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xA2_RES_4_D = { { RES_X_N_MCycle_1<4, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xA3_RES_4_E = { { RES_X_N_MCycle_1<4, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xA4_RES_4_H = { { RES_X_N_MCycle_1<4, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xA5_RES_4_L = { { RES_X_N_MCycle_1<4, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xA6_RES_4_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<4, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xA7_RES_4_A = { { RES_X_N_MCycle_1<4, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xA8_RES_5_B = { { RES_X_N_MCycle_1<5, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xA9_RES_5_C = { { RES_X_N_MCycle_1<5, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xAA_RES_5_D = { { RES_X_N_MCycle_1<5, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xAB_RES_5_E = { { RES_X_N_MCycle_1<5, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xAC_RES_5_H = { { RES_X_N_MCycle_1<5, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xAD_RES_5_L = { { RES_X_N_MCycle_1<5, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xAE_RES_5_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<5, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xAF_RES_5_A = { { RES_X_N_MCycle_1<5, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xB0_RES_6_B = { { RES_X_N_MCycle_1<6, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xB1_RES_6_C = { { RES_X_N_MCycle_1<6, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xB2_RES_6_D = { { RES_X_N_MCycle_1<6, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xB3_RES_6_E = { { RES_X_N_MCycle_1<6, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xB4_RES_6_H = { { RES_X_N_MCycle_1<6, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xB5_RES_6_L = { { RES_X_N_MCycle_1<6, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xB6_RES_6_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<6, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xB7_RES_6_A = { { RES_X_N_MCycle_1<6, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xB8_RES_7_B = { { RES_X_N_MCycle_1<7, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xB9_RES_7_C = { { RES_X_N_MCycle_1<7, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xBA_RES_7_D = { { RES_X_N_MCycle_1<7, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xBB_RES_7_E = { { RES_X_N_MCycle_1<7, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xBC_RES_7_H = { { RES_X_N_MCycle_1<7, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xBD_RES_7_L = { { RES_X_N_MCycle_1<7, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xBE_RES_7_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<RES_X_N_MCycle_1<7, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xBF_RES_7_A = { { RES_X_N_MCycle_1<7, Reg_u8::A> }, 1 };
+
+template<int BIT, Reg_u8 REG>
+void SET_X_N_MCycle_1(DMG_CPU &m_cpu) {
+    uint8_t old_reg = m_cpu.m_regs.get(REG);
+    uint8_t new_reg = old_reg | (1 << BIT);
+    m_cpu.m_regs.set(REG, new_reg);
+};
+
+Opcode Opcode_CB_xC0_SET_0_B = { { SET_X_N_MCycle_1<0, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xC1_SET_0_C = { { SET_X_N_MCycle_1<0, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xC2_SET_0_D = { { SET_X_N_MCycle_1<0, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xC3_SET_0_E = { { SET_X_N_MCycle_1<0, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xC4_SET_0_H = { { SET_X_N_MCycle_1<0, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xC5_SET_0_L = { { SET_X_N_MCycle_1<0, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xC6_SET_0_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<0, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xC7_SET_0_A = { { SET_X_N_MCycle_1<0, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xC8_SET_1_B = { { SET_X_N_MCycle_1<1, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xC9_SET_1_C = { { SET_X_N_MCycle_1<1, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xCA_SET_1_D = { { SET_X_N_MCycle_1<1, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xCB_SET_1_E = { { SET_X_N_MCycle_1<1, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xCC_SET_1_H = { { SET_X_N_MCycle_1<1, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xCD_SET_1_L = { { SET_X_N_MCycle_1<1, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xCE_SET_1_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<1, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xCF_SET_1_A = { { SET_X_N_MCycle_1<1, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xD0_SET_2_B = { { SET_X_N_MCycle_1<2, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xD1_SET_2_C = { { SET_X_N_MCycle_1<2, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xD2_SET_2_D = { { SET_X_N_MCycle_1<2, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xD3_SET_2_E = { { SET_X_N_MCycle_1<2, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xD4_SET_2_H = { { SET_X_N_MCycle_1<2, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xD5_SET_2_L = { { SET_X_N_MCycle_1<2, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xD6_SET_2_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<2, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xD7_SET_2_A = { { SET_X_N_MCycle_1<2, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xD8_SET_3_B = { { SET_X_N_MCycle_1<3, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xD9_SET_3_C = { { SET_X_N_MCycle_1<3, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xDA_SET_3_D = { { SET_X_N_MCycle_1<3, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xDB_SET_3_E = { { SET_X_N_MCycle_1<3, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xDC_SET_3_H = { { SET_X_N_MCycle_1<3, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xDD_SET_3_L = { { SET_X_N_MCycle_1<3, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xDE_SET_3_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<3, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xDF_SET_3_A = { { SET_X_N_MCycle_1<3, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xE0_SET_4_B = { { SET_X_N_MCycle_1<4, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xE1_SET_4_C = { { SET_X_N_MCycle_1<4, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xE2_SET_4_D = { { SET_X_N_MCycle_1<4, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xE3_SET_4_E = { { SET_X_N_MCycle_1<4, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xE4_SET_4_H = { { SET_X_N_MCycle_1<4, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xE5_SET_4_L = { { SET_X_N_MCycle_1<4, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xE6_SET_4_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<4, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xE7_SET_4_A = { { SET_X_N_MCycle_1<4, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xE8_SET_5_B = { { SET_X_N_MCycle_1<5, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xE9_SET_5_C = { { SET_X_N_MCycle_1<5, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xEA_SET_5_D = { { SET_X_N_MCycle_1<5, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xEB_SET_5_E = { { SET_X_N_MCycle_1<5, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xEC_SET_5_H = { { SET_X_N_MCycle_1<5, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xED_SET_5_L = { { SET_X_N_MCycle_1<5, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xEE_SET_5_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<5, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xEF_SET_5_A = { { SET_X_N_MCycle_1<5, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xF0_SET_6_B = { { SET_X_N_MCycle_1<6, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xF1_SET_6_C = { { SET_X_N_MCycle_1<6, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xF2_SET_6_D = { { SET_X_N_MCycle_1<6, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xF3_SET_6_E = { { SET_X_N_MCycle_1<6, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xF4_SET_6_H = { { SET_X_N_MCycle_1<6, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xF5_SET_6_L = { { SET_X_N_MCycle_1<6, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xF6_SET_6_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<6, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xF7_SET_6_A = { { SET_X_N_MCycle_1<6, Reg_u8::A> }, 1 };
+
+Opcode Opcode_CB_xF8_SET_7_B = { { SET_X_N_MCycle_1<7, Reg_u8::B> }, 1 };
+Opcode Opcode_CB_xF9_SET_7_C = { { SET_X_N_MCycle_1<7, Reg_u8::C> }, 1 };
+Opcode Opcode_CB_xFA_SET_7_D = { { SET_X_N_MCycle_1<7, Reg_u8::D> }, 1 };
+Opcode Opcode_CB_xFB_SET_7_E = { { SET_X_N_MCycle_1<7, Reg_u8::E> }, 1 };
+Opcode Opcode_CB_xFC_SET_7_H = { { SET_X_N_MCycle_1<7, Reg_u8::H> }, 1 };
+Opcode Opcode_CB_xFD_SET_7_L = { { SET_X_N_MCycle_1<7, Reg_u8::L> }, 1 };
+Opcode Opcode_CB_xFE_SET_7_HL = { { CB_HL_MCycle_1, CB_HL_MCycle_2, CB_HL_MCycle_3<SET_X_N_MCycle_1<7, Reg_u8::temp_L>> }, 2 };
+Opcode Opcode_CB_xFF_SET_7_A = { { SET_X_N_MCycle_1<7, Reg_u8::A> }, 1 };
+
+
 // ----------------- Unimplemented -----------------
 void UNIMPLEMENTED_MCycle_1(DMG_CPU &m_cpu) {
     printf("ERROR: Unimplemented Opcode");
     m_cpu.callAbort();
 };
-Opcode Opcode_xZZ_UNIMPLEMENTED = {
-    { UNIMPLEMENTED_MCycle_1 },
-    1
+Opcode Opcode_xZZ_UNIMPLEMENTED = { { UNIMPLEMENTED_MCycle_1 }, 1 };
+void UNIMPLEMENTED_CB_MCycle_1(DMG_CPU &m_cpu) {
+    printf("ERROR: Unimplemented CB Opcode");
+    m_cpu.callAbort();
 };
+Opcode Opcode_xZZ_UNIMPLEMENTED_CB = { { UNIMPLEMENTED_CB_MCycle_1 }, 1 };
 
 #ifdef __GNUC__
     #pragma GCC diagnostic pop

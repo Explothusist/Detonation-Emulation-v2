@@ -180,6 +180,9 @@ extern Opcode Opcode_x1A_LD_DE_A;
 extern Opcode Opcode_x2A_LD_HLI_A;
 extern Opcode Opcode_x3A_LD_HLD_A;
 
+extern Opcode Opcode_xEA_LD_N16_A;
+extern Opcode Opcode_xFA_LD_A_N16;
+
 // ----------------- 16 bit Loads -----------------
 extern Opcode Opcode_x01_LD_BC_N16;
 extern Opcode Opcode_x11_LD_DE_N16;
@@ -321,7 +324,297 @@ extern Opcode Opcode_xF4_INVALID;
 extern Opcode Opcode_xFC_INVALID;
 extern Opcode Opcode_xFD_INVALID;
 
+// ----------------- CB Opcodes -----------------
+extern Opcode Opcode_CB_x00_RLC_B;
+extern Opcode Opcode_CB_x01_RLC_C;
+extern Opcode Opcode_CB_x02_RLC_D;
+extern Opcode Opcode_CB_x03_RLC_E;
+extern Opcode Opcode_CB_x04_RLC_H;
+extern Opcode Opcode_CB_x05_RLC_L;
+extern Opcode Opcode_CB_x06_RLC_HL;
+extern Opcode Opcode_CB_x07_RLC_A;
+
+extern Opcode Opcode_CB_x08_RRC_B;
+extern Opcode Opcode_CB_x09_RRC_C;
+extern Opcode Opcode_CB_x0A_RRC_D;
+extern Opcode Opcode_CB_x0B_RRC_E;
+extern Opcode Opcode_CB_x0C_RRC_H;
+extern Opcode Opcode_CB_x0D_RRC_L;
+extern Opcode Opcode_CB_x0E_RRC_HL;
+extern Opcode Opcode_CB_x0F_RRC_A;
+
+extern Opcode Opcode_CB_x10_RL_B;
+extern Opcode Opcode_CB_x11_RL_C;
+extern Opcode Opcode_CB_x12_RL_D;
+extern Opcode Opcode_CB_x13_RL_E;
+extern Opcode Opcode_CB_x14_RL_H;
+extern Opcode Opcode_CB_x15_RL_L;
+extern Opcode Opcode_CB_x16_RL_HL;
+extern Opcode Opcode_CB_x17_RL_A;
+
+extern Opcode Opcode_CB_x18_RR_B;
+extern Opcode Opcode_CB_x19_RR_C;
+extern Opcode Opcode_CB_x1A_RR_D;
+extern Opcode Opcode_CB_x1B_RR_E;
+extern Opcode Opcode_CB_x1C_RR_H;
+extern Opcode Opcode_CB_x1D_RR_L;
+extern Opcode Opcode_CB_x1E_RR_HL;
+extern Opcode Opcode_CB_x1F_RR_A;
+
+extern Opcode Opcode_CB_x20_SLA_B;
+extern Opcode Opcode_CB_x21_SLA_C;
+extern Opcode Opcode_CB_x22_SLA_D;
+extern Opcode Opcode_CB_x23_SLA_E;
+extern Opcode Opcode_CB_x24_SLA_H;
+extern Opcode Opcode_CB_x25_SLA_L;
+extern Opcode Opcode_CB_x26_SLA_HL;
+extern Opcode Opcode_CB_x27_SLA_A;
+
+extern Opcode Opcode_CB_x28_SRA_B;
+extern Opcode Opcode_CB_x29_SRA_C;
+extern Opcode Opcode_CB_x2A_SRA_D;
+extern Opcode Opcode_CB_x2B_SRA_E;
+extern Opcode Opcode_CB_x2C_SRA_H;
+extern Opcode Opcode_CB_x2D_SRA_L;
+extern Opcode Opcode_CB_x2E_SRA_HL;
+extern Opcode Opcode_CB_x2F_SRA_A;
+
+extern Opcode Opcode_CB_x30_SWAP_B;
+extern Opcode Opcode_CB_x31_SWAP_C;
+extern Opcode Opcode_CB_x32_SWAP_D;
+extern Opcode Opcode_CB_x33_SWAP_E;
+extern Opcode Opcode_CB_x34_SWAP_H;
+extern Opcode Opcode_CB_x35_SWAP_L;
+extern Opcode Opcode_CB_x36_SWAP_HL;
+extern Opcode Opcode_CB_x37_SWAP_A;
+
+extern Opcode Opcode_CB_x38_SRL_B;
+extern Opcode Opcode_CB_x39_SRL_C;
+extern Opcode Opcode_CB_x3A_SRL_D;
+extern Opcode Opcode_CB_x3B_SRL_E;
+extern Opcode Opcode_CB_x3C_SRL_H;
+extern Opcode Opcode_CB_x3D_SRL_L;
+extern Opcode Opcode_CB_x3E_SRL_HL;
+extern Opcode Opcode_CB_x3F_SRL_A;
+
+extern Opcode Opcode_CB_x40_BIT_0_B;
+extern Opcode Opcode_CB_x41_BIT_0_C;
+extern Opcode Opcode_CB_x42_BIT_0_D;
+extern Opcode Opcode_CB_x43_BIT_0_E;
+extern Opcode Opcode_CB_x44_BIT_0_H;
+extern Opcode Opcode_CB_x45_BIT_0_L;
+extern Opcode Opcode_CB_x46_BIT_0_HL;
+extern Opcode Opcode_CB_x47_BIT_0_A;
+
+extern Opcode Opcode_CB_x48_BIT_1_B;
+extern Opcode Opcode_CB_x49_BIT_1_C;
+extern Opcode Opcode_CB_x4A_BIT_1_D;
+extern Opcode Opcode_CB_x4B_BIT_1_E;
+extern Opcode Opcode_CB_x4C_BIT_1_H;
+extern Opcode Opcode_CB_x4D_BIT_1_L;
+extern Opcode Opcode_CB_x4E_BIT_1_HL;
+extern Opcode Opcode_CB_x4F_BIT_1_A;
+
+extern Opcode Opcode_CB_x50_BIT_2_B;
+extern Opcode Opcode_CB_x51_BIT_2_C;
+extern Opcode Opcode_CB_x52_BIT_2_D;
+extern Opcode Opcode_CB_x53_BIT_2_E;
+extern Opcode Opcode_CB_x54_BIT_2_H;
+extern Opcode Opcode_CB_x55_BIT_2_L;
+extern Opcode Opcode_CB_x56_BIT_2_HL;
+extern Opcode Opcode_CB_x57_BIT_2_A;
+
+extern Opcode Opcode_CB_x58_BIT_3_B;
+extern Opcode Opcode_CB_x59_BIT_3_C;
+extern Opcode Opcode_CB_x5A_BIT_3_D;
+extern Opcode Opcode_CB_x5B_BIT_3_E;
+extern Opcode Opcode_CB_x5C_BIT_3_H;
+extern Opcode Opcode_CB_x5D_BIT_3_L;
+extern Opcode Opcode_CB_x5E_BIT_3_HL;
+extern Opcode Opcode_CB_x5F_BIT_3_A;
+
+extern Opcode Opcode_CB_x60_BIT_4_B;
+extern Opcode Opcode_CB_x61_BIT_4_C;
+extern Opcode Opcode_CB_x62_BIT_4_D;
+extern Opcode Opcode_CB_x63_BIT_4_E;
+extern Opcode Opcode_CB_x64_BIT_4_H;
+extern Opcode Opcode_CB_x65_BIT_4_L;
+extern Opcode Opcode_CB_x66_BIT_4_HL;
+extern Opcode Opcode_CB_x67_BIT_4_A;
+
+extern Opcode Opcode_CB_x68_BIT_5_B;
+extern Opcode Opcode_CB_x69_BIT_5_C;
+extern Opcode Opcode_CB_x6A_BIT_5_D;
+extern Opcode Opcode_CB_x6B_BIT_5_E;
+extern Opcode Opcode_CB_x6C_BIT_5_H;
+extern Opcode Opcode_CB_x6D_BIT_5_L;
+extern Opcode Opcode_CB_x6E_BIT_5_HL;
+extern Opcode Opcode_CB_x6F_BIT_5_A;
+
+extern Opcode Opcode_CB_x70_BIT_6_B;
+extern Opcode Opcode_CB_x71_BIT_6_C;
+extern Opcode Opcode_CB_x72_BIT_6_D;
+extern Opcode Opcode_CB_x73_BIT_6_E;
+extern Opcode Opcode_CB_x74_BIT_6_H;
+extern Opcode Opcode_CB_x75_BIT_6_L;
+extern Opcode Opcode_CB_x76_BIT_6_HL;
+extern Opcode Opcode_CB_x77_BIT_6_A;
+
+extern Opcode Opcode_CB_x78_BIT_7_B;
+extern Opcode Opcode_CB_x79_BIT_7_C;
+extern Opcode Opcode_CB_x7A_BIT_7_D;
+extern Opcode Opcode_CB_x7B_BIT_7_E;
+extern Opcode Opcode_CB_x7C_BIT_7_H;
+extern Opcode Opcode_CB_x7D_BIT_7_L;
+extern Opcode Opcode_CB_x7E_BIT_7_HL;
+extern Opcode Opcode_CB_x7F_BIT_7_A;
+
+extern Opcode Opcode_CB_x80_RES_0_B;
+extern Opcode Opcode_CB_x81_RES_0_C;
+extern Opcode Opcode_CB_x82_RES_0_D;
+extern Opcode Opcode_CB_x83_RES_0_E;
+extern Opcode Opcode_CB_x84_RES_0_H;
+extern Opcode Opcode_CB_x85_RES_0_L;
+extern Opcode Opcode_CB_x86_RES_0_HL;
+extern Opcode Opcode_CB_x87_RES_0_A;
+
+extern Opcode Opcode_CB_x88_RES_1_B;
+extern Opcode Opcode_CB_x89_RES_1_C;
+extern Opcode Opcode_CB_x8A_RES_1_D;
+extern Opcode Opcode_CB_x8B_RES_1_E;
+extern Opcode Opcode_CB_x8C_RES_1_H;
+extern Opcode Opcode_CB_x8D_RES_1_L;
+extern Opcode Opcode_CB_x8E_RES_1_HL;
+extern Opcode Opcode_CB_x8F_RES_1_A;
+
+extern Opcode Opcode_CB_x90_RES_2_B;
+extern Opcode Opcode_CB_x91_RES_2_C;
+extern Opcode Opcode_CB_x92_RES_2_D;
+extern Opcode Opcode_CB_x93_RES_2_E;
+extern Opcode Opcode_CB_x94_RES_2_H;
+extern Opcode Opcode_CB_x95_RES_2_L;
+extern Opcode Opcode_CB_x96_RES_2_HL;
+extern Opcode Opcode_CB_x97_RES_2_A;
+
+extern Opcode Opcode_CB_x98_RES_3_B;
+extern Opcode Opcode_CB_x99_RES_3_C;
+extern Opcode Opcode_CB_x9A_RES_3_D;
+extern Opcode Opcode_CB_x9B_RES_3_E;
+extern Opcode Opcode_CB_x9C_RES_3_H;
+extern Opcode Opcode_CB_x9D_RES_3_L;
+extern Opcode Opcode_CB_x9E_RES_3_HL;
+extern Opcode Opcode_CB_x9F_RES_3_A;
+
+extern Opcode Opcode_CB_xA0_RES_4_B;
+extern Opcode Opcode_CB_xA1_RES_4_C;
+extern Opcode Opcode_CB_xA2_RES_4_D;
+extern Opcode Opcode_CB_xA3_RES_4_E;
+extern Opcode Opcode_CB_xA4_RES_4_H;
+extern Opcode Opcode_CB_xA5_RES_4_L;
+extern Opcode Opcode_CB_xA6_RES_4_HL;
+extern Opcode Opcode_CB_xA7_RES_4_A;
+
+extern Opcode Opcode_CB_xA8_RES_5_B;
+extern Opcode Opcode_CB_xA9_RES_5_C;
+extern Opcode Opcode_CB_xAA_RES_5_D;
+extern Opcode Opcode_CB_xAB_RES_5_E;
+extern Opcode Opcode_CB_xAC_RES_5_H;
+extern Opcode Opcode_CB_xAD_RES_5_L;
+extern Opcode Opcode_CB_xAE_RES_5_HL;
+extern Opcode Opcode_CB_xAF_RES_5_A;
+
+extern Opcode Opcode_CB_xB0_RES_6_B;
+extern Opcode Opcode_CB_xB1_RES_6_C;
+extern Opcode Opcode_CB_xB2_RES_6_D;
+extern Opcode Opcode_CB_xB3_RES_6_E;
+extern Opcode Opcode_CB_xB4_RES_6_H;
+extern Opcode Opcode_CB_xB5_RES_6_L;
+extern Opcode Opcode_CB_xB6_RES_6_HL;
+extern Opcode Opcode_CB_xB7_RES_6_A;
+
+extern Opcode Opcode_CB_xB8_RES_7_B;
+extern Opcode Opcode_CB_xB9_RES_7_C;
+extern Opcode Opcode_CB_xBA_RES_7_D;
+extern Opcode Opcode_CB_xBB_RES_7_E;
+extern Opcode Opcode_CB_xBC_RES_7_H;
+extern Opcode Opcode_CB_xBD_RES_7_L;
+extern Opcode Opcode_CB_xBE_RES_7_HL;
+extern Opcode Opcode_CB_xBF_RES_7_A;
+
+extern Opcode Opcode_CB_xC0_SET_0_B;
+extern Opcode Opcode_CB_xC1_SET_0_C;
+extern Opcode Opcode_CB_xC2_SET_0_D;
+extern Opcode Opcode_CB_xC3_SET_0_E;
+extern Opcode Opcode_CB_xC4_SET_0_H;
+extern Opcode Opcode_CB_xC5_SET_0_L;
+extern Opcode Opcode_CB_xC6_SET_0_HL;
+extern Opcode Opcode_CB_xC7_SET_0_A;
+
+extern Opcode Opcode_CB_xC8_SET_1_B;
+extern Opcode Opcode_CB_xC9_SET_1_C;
+extern Opcode Opcode_CB_xCA_SET_1_D;
+extern Opcode Opcode_CB_xCB_SET_1_E;
+extern Opcode Opcode_CB_xCC_SET_1_H;
+extern Opcode Opcode_CB_xCD_SET_1_L;
+extern Opcode Opcode_CB_xCE_SET_1_HL;
+extern Opcode Opcode_CB_xCF_SET_1_A;
+
+extern Opcode Opcode_CB_xD0_SET_2_B;
+extern Opcode Opcode_CB_xD1_SET_2_C;
+extern Opcode Opcode_CB_xD2_SET_2_D;
+extern Opcode Opcode_CB_xD3_SET_2_E;
+extern Opcode Opcode_CB_xD4_SET_2_H;
+extern Opcode Opcode_CB_xD5_SET_2_L;
+extern Opcode Opcode_CB_xD6_SET_2_HL;
+extern Opcode Opcode_CB_xD7_SET_2_A;
+
+extern Opcode Opcode_CB_xD8_SET_3_B;
+extern Opcode Opcode_CB_xD9_SET_3_C;
+extern Opcode Opcode_CB_xDA_SET_3_D;
+extern Opcode Opcode_CB_xDB_SET_3_E;
+extern Opcode Opcode_CB_xDC_SET_3_H;
+extern Opcode Opcode_CB_xDD_SET_3_L;
+extern Opcode Opcode_CB_xDE_SET_3_HL;
+extern Opcode Opcode_CB_xDF_SET_3_A;
+
+extern Opcode Opcode_CB_xE0_SET_4_B;
+extern Opcode Opcode_CB_xE1_SET_4_C;
+extern Opcode Opcode_CB_xE2_SET_4_D;
+extern Opcode Opcode_CB_xE3_SET_4_E;
+extern Opcode Opcode_CB_xE4_SET_4_H;
+extern Opcode Opcode_CB_xE5_SET_4_L;
+extern Opcode Opcode_CB_xE6_SET_4_HL;
+extern Opcode Opcode_CB_xE7_SET_4_A;
+
+extern Opcode Opcode_CB_xE8_SET_5_B;
+extern Opcode Opcode_CB_xE9_SET_5_C;
+extern Opcode Opcode_CB_xEA_SET_5_D;
+extern Opcode Opcode_CB_xEB_SET_5_E;
+extern Opcode Opcode_CB_xEC_SET_5_H;
+extern Opcode Opcode_CB_xED_SET_5_L;
+extern Opcode Opcode_CB_xEE_SET_5_HL;
+extern Opcode Opcode_CB_xEF_SET_5_A;
+
+extern Opcode Opcode_CB_xF0_SET_6_B;
+extern Opcode Opcode_CB_xF1_SET_6_C;
+extern Opcode Opcode_CB_xF2_SET_6_D;
+extern Opcode Opcode_CB_xF3_SET_6_E;
+extern Opcode Opcode_CB_xF4_SET_6_H;
+extern Opcode Opcode_CB_xF5_SET_6_L;
+extern Opcode Opcode_CB_xF6_SET_6_HL;
+extern Opcode Opcode_CB_xF7_SET_6_A;
+
+extern Opcode Opcode_CB_xF8_SET_7_B;
+extern Opcode Opcode_CB_xF9_SET_7_C;
+extern Opcode Opcode_CB_xFA_SET_7_D;
+extern Opcode Opcode_CB_xFB_SET_7_E;
+extern Opcode Opcode_CB_xFC_SET_7_H;
+extern Opcode Opcode_CB_xFD_SET_7_L;
+extern Opcode Opcode_CB_xFE_SET_7_HL;
+extern Opcode Opcode_CB_xFF_SET_7_A;
+
 // ----------------- Unimplemented -----------------
 extern Opcode Opcode_xZZ_UNIMPLEMENTED;
+extern Opcode Opcode_xZZ_UNIMPLEMENTED_CB;
 
 #endif
