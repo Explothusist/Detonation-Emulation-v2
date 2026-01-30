@@ -1,0 +1,5 @@
+#ifndef ENABLE_EMULATOR_LOGGING_
+
+#define DEBUG_LOGGING
+
+#endif

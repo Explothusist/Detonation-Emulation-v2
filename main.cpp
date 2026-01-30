@@ -5,6 +5,7 @@
 #include <fstream>
 #include <filesystem>
 
+#include "enable_logging.h"
 #include "menus/MenuHandler.h"
 #include "emulator/emulator_frontend.h"
 #include "filehandle.h"
@@ -12,23 +13,7 @@
 #include "SDL-Drawing-Library/DrawingContext.h"
 
 
-// Constants
-constexpr int kFrameRate{ 60U };
-constexpr int kNSPerFrame{ 16666666U }; // { 1,000,000,000 / kFrameRate };
-
-
-// void readSettingsFiles(std::vector<std::string>* recent_games) {
-//     recent_games = readRecentGamesFile();
-// };
-
-void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, Emulator_Options* options) { // TODO: Needs to know contents of ROM directory and emulator settings
-    // const int main_menu = 0;
-    // // const int pause_menu = 1;
-    // const int recent_menu = 2;
-    // const int keybindings_menu = 3;
-    // const int options_menu = 4;
-    // const int cartridge_info = 5;
-
+void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, std::vector<uint32_t>* keybindings, Emulator_Options* options) {
     std::vector<std::string> recent_entries{ std::vector<std::string>() }; // For Recent Menu
     std::vector<EntryEffect> recent_effects{ std::vector<EntryEffect>() };
     for (int i = 0; i < static_cast<int>(recent_games->size()); i++) {
@@ -48,13 +33,29 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
 
     m_menus->addMenu( // Main Menu
         "Welcome! Please select an action.",
-        {"Load Recent", "Load Game", "Keybindings", "Options"},
-        {EntryEffect(EFFECT_TO_MENU, Recent_Menu), EntryEffect(EFFECT_SELECT_ROM_RELOAD_RECENT, -1), EntryEffect(EFFECT_TO_MENU, Keybindings_Menu), EntryEffect(EFFECT_TO_MENU, Options_Menu)}
+        {"Load Recent", "Load Game", "Keybindings", "Options", 
+#ifdef DEBUG_LOGGING
+            "Logfile"
+#endif
+        },
+        {EntryEffect(EFFECT_TO_MENU, Recent_Menu), EntryEffect(EFFECT_SELECT_ROM_RELOAD_RECENT, -1), EntryEffect(EFFECT_TO_MENU, Keybindings_Menu), EntryEffect(EFFECT_TO_MENU, Options_Menu),
+#ifdef DEBUG_LOGGING
+            EntryEffect(EFFECT_TO_MENU, Logfile_Menu_Main)
+#endif
+}
     );
     m_menus->addMenu( // Pause Menu
         "Game Paused",
-        {"Back to Game", "Main Menu", "Keybindings", "Options"},
-        {EntryEffect(EFFECT_BACK_TO_EMULATOR, -1), EntryEffect(EFFECT_RETURN_TO_MAIN, Main_Menu), EntryEffect(EFFECT_TO_MENU, Keybindings_Menu), EntryEffect(EFFECT_TO_MENU, Options_Menu)}
+        {"Back to Game", "Main Menu", "Keybindings", "Options", 
+#ifdef DEBUG_LOGGING
+            "Logfile"
+#endif
+        },
+        {EntryEffect(EFFECT_BACK_TO_EMULATOR, -1), EntryEffect(EFFECT_RETURN_TO_MAIN, Main_Menu), EntryEffect(EFFECT_TO_MENU, Keybindings_Menu), EntryEffect(EFFECT_TO_MENU, Options_Menu),
+#ifdef DEBUG_LOGGING
+            EntryEffect(EFFECT_TO_MENU, Logfile_Menu_Pause)
+#endif
+        }
     );
     m_menus->addMenu( // Recent Menu
         "Select a game to load.",
@@ -121,6 +122,41 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
             EntryEffect(EFFECT_LOAD_ANYWAY, -1)
         }
     );
+    
+#ifdef DEBUG_LOGGING
+    m_menus->addMenu( // Logfile Menu (Main)
+        "Logfile",
+        {
+            "Log Enabled: "+std::string(options->m_log_enable ? "True" : "False"),
+            "Log Length: "+std::to_string(options->m_log_length),
+            "Cancel",
+            "Save"
+        },
+        {
+            EntryEffect(EFFECT_TOGGLE, TOGGLE_LOG_ENABLE),
+            EntryEffect(EFFECT_TOGGLE, TOGGLE_LOG_LENGTH),
+            EntryEffect(EFFECT_FORGET_OPTIONS, -1),
+            EntryEffect(EFFECT_SAVE_OPTIONS, -1)
+        }
+    );
+    m_menus->addMenu( // Logfile Menu (Pause)
+        "Logfile",
+        {
+            "Log Enabled: "+std::string(options->m_log_enable ? "True" : "False"),
+            "Log Length: "+std::to_string(options->m_log_length),
+            "Dump Logfile",
+            "Cancel",
+            "Save"
+        },
+        {
+            EntryEffect(EFFECT_TOGGLE, TOGGLE_LOG_ENABLE),
+            EntryEffect(EFFECT_TOGGLE, TOGGLE_LOG_LENGTH),
+            EntryEffect(EFFECT_DUMP_LOGFILE, -1),
+            EntryEffect(EFFECT_FORGET_OPTIONS, -1),
+            EntryEffect(EFFECT_SAVE_OPTIONS, -1)
+        }
+    );
+#endif
 };
 
 
@@ -133,12 +169,16 @@ int main() {
 
     Emulator_Options* m_options{ readOptionsFile() };
     
+#ifdef DEBUG_LOGGING
     printf("COMPLETE: Initialization: Emulator Data Retreived\n");
+#endif
 
     DrawingContext* m_ctx{ new DrawingContext("Detonation Emulation") };
 
     if (m_ctx->init() != 0) {
+#ifdef DEBUG_LOGGING
         printf("ERROR: Main: Window.init() Failed\n");
+#endif
     }else {
 
         EmulatorState m_state{ State_InMenu };
@@ -155,7 +195,9 @@ int main() {
         Uint64 ticksNS{ 0 };
         Uint64 nextFrameNS{ SDL_GetTicksNS() };
 
+#ifdef DEBUG_LOGGING
         printf("COMPLETE: Initialization: Beginning Main Loop\n");
+#endif
 
         // Do Setup things here:
         m_ctx->loadFont("fonts/8bitOperatorPlus-Regular.ttf");
@@ -168,8 +210,8 @@ int main() {
 
             ticksNS = SDL_GetTicksNS();
             while (ticksNS > nextFrameNS) {
-                // nextFrameNS += static_cast<Uint64>(kNSPerFrame); // Rigidly Refues to Adapt
-                nextFrameNS = ticksNS+static_cast<Uint64>(kNSPerFrame); // Adapts to Lag
+                // nextFrameNS += static_cast<Uint64>(k_NS_Per_Frame); // Rigidly Refues to Adapt
+                nextFrameNS = ticksNS+static_cast<Uint64>(k_NS_Per_Frame); // Adapts to Lag
 
                 while (SDL_PollEvent(&event)) {
                     if (event.type == SDL_EVENT_QUIT) {
@@ -199,7 +241,7 @@ int main() {
                         m_menus->drawSelf();
                         break;
                     case State_InEmulator:
-                        m_emulator->drawSelf(); // This is wrong and will be corrected later
+                        m_emulator->runFrame();
                         break;
                 }
 
@@ -218,13 +260,17 @@ int main() {
     }
 
     // DESTROY THINGS!
+#ifdef DEBUG_LOGGING
     printf("EXITING: Program: Destroying Objects\n");
+#endif
     delete m_recent_games;
     m_recent_games = nullptr;
     delete m_ctx;
     m_ctx = nullptr;
     
 
+#ifdef DEBUG_LOGGING
     printf("EXIT\n");
+#endif
     return 0;
 };

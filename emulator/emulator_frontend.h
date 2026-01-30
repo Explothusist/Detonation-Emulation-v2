@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <deque>
 #include "cpu.h"
 #include "../utils.h"
 
@@ -17,10 +18,14 @@ class DMG_Emulator {
         void Start_Emulation(std::vector<uint8_t>* rom);
         void Resume_Emulation();
 
-        void drawSelf(); // This is mortally incorrect
+        void drawBackground();
+        void runFrame();
 
         bool hasInitialized();
         void unInitialize();
+
+        std::deque<std::string>* getLogfile();
+        std::string getRomname();
     private:
         DrawingContext* m_ctx;
         Menu_Handler* m_menus;

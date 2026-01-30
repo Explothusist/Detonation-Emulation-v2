@@ -7,6 +7,7 @@
 #include "ppu.h"
 #include "apu.h"
 #include "opcodes.h"
+#include "emulator_log.h"
 #include "../utils.h"
 
 class Menu_Handler;
@@ -16,13 +17,15 @@ class DMG_CPU {
     public:
         DMG_CPU();
         
-        Cart_Details Trigger_InitializeAll(std::vector<uint8_t>* rom, bool use_boot_rom);
+        Cart_Details Trigger_InitializeAll(std::vector<uint8_t>* rom, Emulator_Options* options);
         void Trigger_PowerCycle(); // Full Reset on everything, including ROM
         void Trigger_ResetButton(); // Resets all RAM, but keeps ROM
         void PowerCycle();
         void Reset(); // WORKING HERE
 
-        void Initialize(bool use_boot_rom);
+        void Initialize(bool use_boot_rom, int log_length, bool log_enable);
+
+        void UpdateSettings(Emulator_Options* options);
 
         Opcode* parseOpcode(uint8_t opcode);
         Opcode* parseCBOpcode(uint8_t opcode);
@@ -30,6 +33,8 @@ class DMG_CPU {
         void loadCBOpcode();
         void runMCycle();
         void runTCycle();
+
+        void runFrame();
 
         void callAbort();
         
@@ -48,6 +53,7 @@ class DMG_CPU {
         Register_Handler m_regs;
         DMG_PPU m_ppu;
         DMG_APU m_apu;
+        Emulator_Logfile m_logfile;
     private:
         int m_cycle_count;
 
@@ -58,8 +64,12 @@ class DMG_CPU {
         bool m_stopped; // Slightly different rules
         bool m_halted;
         bool m_halt_bug;
+        bool m_read_cb_opcode;
 
         bool m_abort;
+
+        std::string m_log_line;
+        bool m_log_enable;
 };
 
 #endif

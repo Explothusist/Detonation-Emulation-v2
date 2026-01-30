@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cctype>
 #include "../utils.h"
+#include "../enable_logging.h"
 
 Register_Handler::Register_Handler():
     F{ 0 },
@@ -109,7 +110,11 @@ void Register_Handler::set(Reg_flag reg, bool value) {
         // case Reg_flag::NN: F = ((F & 0b1011'0000) | (uint8_t(!value) << 6)); break; // But setting should never happen
         // case Reg_flag::NH: F = ((F & 0b1101'0000) | (uint8_t(!value) << 5)); break;
         // case Reg_flag::NC: F = ((F & 0b1110'0000) | (uint8_t(!value) << 4)); break;
-        default: printf("Cannot write to N* flag!"); break;
+        default:
+#ifdef DEBUG_LOGGING
+            printf("Cannot write to N* flag!\n");
+#endif
+            break;
     }
 };
 void Register_Handler::latchFlags() {
@@ -326,7 +331,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             m_cart_has_battery = true;
             break;
         case 0x08: // ROM + RAM (Unused Type)
+#ifdef DEBUG_LOGGING
             printf("WARNING: Memory Setup: Cartridge Uses Type 'ROM + RAM' Never Used In Licensed Games\n");
+#endif
             if (cart_details.m_first_warning == "") {
                 cart_details.m_first_warning = "Cartridge Type 'ROM + RAM' Never Used In Licensed Games";
             }
@@ -338,7 +345,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             m_cart_has_ram = true;
             break;
         case 0x09: // ROM + RAM + Battery (Unused Type)
+#ifdef DEBUG_LOGGING
             printf("WARNING: Memory Setup: Cartridge Uses Type 'ROM + RAM + Battery' Never Used In Licensed Games\n");
+#endif
             if (cart_details.m_first_warning == "") {
                 cart_details.m_first_warning = "Cartridge Type 'ROM + RAM' Never Used In Licensed Games";
             }
@@ -352,7 +361,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         case 0x0b: // MMM01
             cart_details.m_cart_name = "MMM01";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Type 'MMM01' Not Supported\n");
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'MMM01'";
             }
@@ -361,7 +372,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         case 0x0c: // MMM01 + RAM
             cart_details.m_cart_name = "MMM01 + RAM";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Type 'MMM01 + RAM' Not Supported\n");
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'MMM01'";
             }
@@ -370,7 +383,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         case 0x0d: // MMM01 + RAM + Battery
             cart_details.m_cart_name = "MMM01 + RAM + Battery";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Type 'MMM01 + RAM + Battery' Not Supported\n");
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'MMM01'";
             }
@@ -450,7 +465,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         case 0xfc: // Pocket Camera
             cart_details.m_cart_name = "Pocket Camera";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Type 'Pocket Camera' Not Supported\n");
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'Pocket Camera'";
             }
@@ -459,7 +476,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         case 0xfd: // Bandai Tama5
             cart_details.m_cart_name = "Bandai Tama5";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Type 'Bandai Tama5' Not Supported\n");
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'Bandai Tama5'";
             }
@@ -468,7 +487,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         case 0xfe: // HuC3
             cart_details.m_cart_name = "HuC3";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Type 'HuC3' Not Supported\n");
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'HuC3'";
             }
@@ -477,7 +498,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         case 0xff: // HuC1 + RAM + Battery
             cart_details.m_cart_name = "HuC1 + RAM + Battery";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Type 'HuC1 + RAM + Battery' Not Supported\n");
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'HuC1'";
             }
@@ -486,7 +509,9 @@ void Memory_Handler::interpret_cartridge_type(uint8_t cart_type, Cart_Details &c
             break;
         default:
             cart_details.m_cart_name = "Unknown";
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Unrecognized Type '%i'\n", cart_type);
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Unsupported Cartridge Type 'Unknown'";
             }
@@ -534,7 +559,9 @@ void Memory_Handler::interpret_rom_size_type(uint8_t rom_size, Cart_Details &car
             cart_details.m_rom_size_name = "512 ROM Banks, 8 MiB";
             break;
         case 0x52: // Only listed in unofficial docs
+#ifdef DEBUG_LOGGING
             printf("WARNING: Memory Setup: Uses Unused Cartridge ROM Size '72 banks'\n");
+#endif
             if (cart_details.m_first_warning == "") {
                 cart_details.m_first_warning = "ROM Size '72 banks' Not Used In Licensed Games";
             }
@@ -545,7 +572,9 @@ void Memory_Handler::interpret_rom_size_type(uint8_t rom_size, Cart_Details &car
             cart_details.m_rom_size_name = "72 ROM Banks, 1.1 MiB (Unused Type)";
             break;
         case 0x53: // Only listed in unofficial docs
+#ifdef DEBUG_LOGGING
             printf("WARNING: Memory Setup: Uses Unused Cartridge ROM Size '80 banks'\n");
+#endif
             if (cart_details.m_first_warning == "") {
                 cart_details.m_first_warning = "ROM Size '80 banks' Not Used In Licensed Games";
             }
@@ -556,7 +585,9 @@ void Memory_Handler::interpret_rom_size_type(uint8_t rom_size, Cart_Details &car
             cart_details.m_rom_size_name = "80 ROM Banks, 1.2 MiB (Unused Type)";
             break;
         case 0x54: // Only listed in unofficial docs
+#ifdef DEBUG_LOGGING
             printf("WARNING: Memory Setup: Uses Unused Cartridge ROM Size '96 banks'\n");
+#endif
             if (cart_details.m_first_warning == "") {
                 cart_details.m_first_warning = "ROM Size '96 banks' Not Used In Licensed Games";
             }
@@ -567,7 +598,9 @@ void Memory_Handler::interpret_rom_size_type(uint8_t rom_size, Cart_Details &car
             m_num_rom_banks = 96;
             break;
         default:
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Unrecognized ROM Size '%i'\n", rom_size);
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Cartridge ROM Size Unrecognized";
             }
@@ -584,7 +617,9 @@ void Memory_Handler::interpret_ram_size_type(uint8_t ram_size, Cart_Details &car
             cart_details.m_ram_size_name = "No RAM";
             break;
         case 0x01: // Only listed in unofficial docs
+#ifdef DEBUG_LOGGING
             printf("WARNING: Memory Setup: Uses Unused Cartridge RAM Size '2 KiB'\n");
+#endif
             if (cart_details.m_first_warning == "") {
                 cart_details.m_first_warning = "RAM Size '2 KiB' Not Used In Licensed Games";
             }
@@ -611,7 +646,9 @@ void Memory_Handler::interpret_ram_size_type(uint8_t ram_size, Cart_Details &car
             cart_details.m_ram_size_name = "8 RAM Bank, 64 KiB";
             break;
         default:
+#ifdef DEBUG_LOGGING
             printf("ERROR: Memory Setup: Cartridge Uses Unrecognized RAM Size '%i'\n", ram_size);
+#endif
             if (cart_details.m_first_error == "") {
                 cart_details.m_first_error = "Cartridge RAM Size Unrecognized";
             }
@@ -912,7 +949,9 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
 
     // CGB Flag
     if (cgb_flag == 0x80) {
+#ifdef DEBUG_LOGGING
         printf("WARNING: Memory Setup: CGB Cartridge In Compatability Mode\n");
+#endif
         if (cart_details.m_first_warning == "") {
             cart_details.m_first_warning = "CGB Cartridge In Compatability Mode";
         }
@@ -921,7 +960,9 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
         cart_details.m_has_load_warning = true;
         cart_details.m_is_cgb_cart = "CGB Cartridge with Compatability";
     }else if (cgb_flag == 0xc0) {
+#ifdef DEBUG_LOGGING
         printf("ERROR: Memory Setup: CGB Cartridge, Cannot Be Run\n");
+#endif
         if (cart_details.m_first_error == "") {
             cart_details.m_first_error = "CGB Cartridge, Cannot Be Run";
         }
@@ -938,10 +979,14 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
         checksum = checksum - rom->at(address) - 1;
     }
     if (checksum == header_checksum) {
+#ifdef DEBUG_LOGGING
         printf("COMPLETE: Memory Setup: Header Checksum Passed\n");
+#endif
         cart_details.m_passes_checksum = true;
     }else {
+#ifdef DEBUG_LOGGING
         printf("WARNING: Memory Setup: Header Checksum Failed\n");
+#endif
         if (cart_details.m_first_warning == "") {
             cart_details.m_first_warning = "Header Checksum Failed";
         }
@@ -959,10 +1004,14 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
         }
     }
     if (logo_matches) {
+#ifdef DEBUG_LOGGING
         printf("COMPLETE: Memory Setup: Nintendo Logo Matches\n");
+#endif
         cart_details.m_valid_logo = true;
     }else {
+#ifdef DEBUG_LOGGING
         printf("WARNING: Memory Setup: Nintendo Logo Does Not Match\n");
+#endif
         if (cart_details.m_first_warning == "") {
             cart_details.m_first_warning = "Nintendo Logo Does Not Match";
         }
@@ -998,6 +1047,7 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
 
     // Read Saved RAM WORKING HERE
 
+#ifdef DEBUG_LOGGING
     if (!cart_details.m_has_load_error) {
         if (!cart_details.m_has_load_warning) {
             printf("COMPLETE: Memory Setup: ROM Loaded\n");
@@ -1011,6 +1061,7 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
     }else {
         printf("ERROR: Memory Setup: ROM Could Not Be Loaded\n");
     }
+#endif
 
     return cart_details;
 };
@@ -1020,7 +1071,9 @@ void Memory_Handler::latchBus(uint16_t addr) {
         m_latched_addr = addr;
         m_bus_latched = true;
     }else {
-        printf("ERROR: Memory Handler: latchBus: Bus Cannot Be Latched Twice In One M Cycle");
+#ifdef DEBUG_LOGGING
+        printf("ERROR: Memory Handler: latchBus: Bus Cannot Be Latched Twice In One M Cycle\n");
+#endif
     }
 };
 void Memory_Handler::freeBus() {
@@ -1028,13 +1081,22 @@ void Memory_Handler::freeBus() {
 };
 uint8_t Memory_Handler::Read() {
     if (!m_bus_latched) {
-        printf("ERROR: Memory Handler: Read: Bus Not Latched");
+#ifdef DEBUG_LOGGING
+        printf("ERROR: Memory Handler: Read: Bus Not Latched\n");
+#endif
         return m_open_bus;
     }
     uint16_t address = m_latched_addr;
     uint8_t ret = m_open_bus;
     if (address < 0x4000) {
-        ret = m_RomBanks[m_rom_bank_1][address];
+        if (m_in_boot_rom_internal && address < 0x0100) {
+// #ifdef DEBUG_LOGGING
+//             printf("BOOT ROM Read at addr %s\n", to_b16_out(address).c_str());
+// #endif
+            ret = Boot_ROM[address];
+        }else {
+            ret = m_RomBanks[m_rom_bank_1][address];
+        }
     }else if (address < 0x8000) {
         ret = m_RomBanks[m_rom_bank_2][address - 0x4000];
     }else if (address < 0xa000) {
@@ -1044,12 +1106,16 @@ uint8_t Memory_Handler::Read() {
     }else if (address < 0xe000) {
         ret = XC000_WORK_RAM[address - 0xc000];
     }else if (address < 0xfe00) {
-        printf("WARNING: Memory Read: Echo RAM Read");
+#ifdef DEBUG_LOGGING
+        printf("WARNING: Memory Read: Echo RAM Read\n");
+#endif
         ret = XC000_WORK_RAM[address - 0xe000];
     }else if (address < 0xfea0) {
         ret = XFE00_OAM[address - 0xfe00];
     }else if (address < 0xff00) {
-        printf("ERROR: Memory Read: Unusable Memory Read");
+#ifdef DEBUG_LOGGING
+        printf("ERROR: Memory Read: Unusable Memory Read\n");
+#endif
         ret = m_open_bus;
     }else if (address < 0xff80) {
         ret = XFF00_IO_REGS[address - 0xff00]; // Reading special registers...
@@ -1063,7 +1129,9 @@ uint8_t Memory_Handler::Read() {
 };
 void Memory_Handler::Write(uint8_t value) {
     if (!m_bus_latched) {
-        printf("ERROR: Memory Handler: Write: Bus Not Latched");
+#ifdef DEBUG_LOGGING
+        printf("ERROR: Memory Handler: Write: Bus Not Latched\n");
+#endif
         return;
     }
     uint16_t address = m_latched_addr;
@@ -1080,12 +1148,16 @@ void Memory_Handler::Write(uint8_t value) {
     }else if (address < 0xe000) {
         XC000_WORK_RAM[address - 0xc000] = value;
     }else if (address < 0xfe00) {
-        printf("WARNING: Memory Read: Echo RAM Read");
+#ifdef DEBUG_LOGGING
+        printf("WARNING: Memory Read: Echo RAM Read\n");
+#endif
         XC000_WORK_RAM[address - 0xe000] = value;
     }else if (address < 0xfea0) {
         XFE00_OAM[address - 0xfe00] = value;
     }else if (address < 0xff00) {
-        printf("ERROR: Memory Read: Unusable Memory Read");
+#ifdef DEBUG_LOGGING
+        printf("ERROR: Memory Read: Unusable Memory Read\n");
+#endif
     }else if (address < 0xff80) {
         XFF00_IO_REGS[address - 0xff00] = value; // Reading special registers...
     }else if (address < 0xffff) {
@@ -1109,12 +1181,16 @@ uint8_t Memory_Handler::_Get(uint16_t address) {
     }else if (address < 0xe000) {
         return XC000_WORK_RAM[address - 0xc000];
     }else if (address < 0xfe00) {
-        printf("WARNING: Memory Read: Echo RAM Read");
+#ifdef DEBUG_LOGGING
+        printf("WARNING: Memory Read: Echo RAM Read\n");
+#endif
         return XC000_WORK_RAM[address - 0xe000];
     }else if (address < 0xfea0) {
         return XFE00_OAM[address - 0xfe00];
     }else if (address < 0xff00) {
-        printf("ERROR: Memory Read: Unusable Memory Read");
+#ifdef DEBUG_LOGGING
+        printf("ERROR: Memory Read: Unusable Memory Read\n");
+#endif
         return 0;
     }else if (address < 0xff80) {
         return XFF00_IO_REGS[address - 0xff00];
@@ -1139,12 +1215,16 @@ void Memory_Handler::_Set(uint16_t address, uint8_t value) {
     }else if (address < 0xe000) {
         XC000_WORK_RAM[address - 0xc000] = value;
     }else if (address < 0xfe00) {
-        printf("WARNING: Memory Read: Echo RAM Read");
+#ifdef DEBUG_LOGGING
+        printf("WARNING: Memory Read: Echo RAM Read\n");
+#endif
         XC000_WORK_RAM[address - 0xe000] = value;
     }else if (address < 0xfea0) {
         XFE00_OAM[address - 0xfe00] = value;
     }else if (address < 0xff00) {
-        printf("ERROR: Memory Read: Unusable Memory Read");
+#ifdef DEBUG_LOGGING
+        printf("ERROR: Memory Read: Unusable Memory Read\n");
+#endif
     }else if (address < 0xff80) {
         XFF00_IO_REGS[address - 0xff00] = value; // Reading special registers...
     }else if (address < 0xffff) {

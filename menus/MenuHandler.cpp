@@ -1,6 +1,7 @@
 
 #include "MenuHandler.h"
 
+#include "../enable_logging.h"
 #include "../filehandle.h"
 #include "../SDL-Drawing-Library/DrawingContext.h"
 #include "../emulator/emulator_frontend.h"
@@ -339,6 +340,19 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
                     m_options->m_temp_display_cart_info = !m_options->m_temp_display_cart_info;
                     m_menus[m_menu_selected].replaceKeyEntry(-1, (m_options->m_temp_display_cart_info ? "True" : "False"));
                     break;
+#ifdef DEBUG_LOGGING
+                case TOGGLE_LOG_LENGTH:
+                    m_options->m_temp_log_length = m_options->m_temp_log_length*10;
+                    if (m_options->m_temp_log_length >= 1000000) {
+                        m_options->m_temp_log_length = 100;
+                    }
+                    m_menus[m_menu_selected].replaceKeyEntry(-1, std::to_string(m_options->m_temp_log_length));
+                    break;
+                case TOGGLE_LOG_ENABLE:
+                    m_options->m_temp_log_enable = !m_options->m_temp_log_enable;
+                    m_menus[m_menu_selected].replaceKeyEntry(-1, (m_options->m_temp_log_enable ? "True" : "False"));
+                    break;
+#endif
             }
             break;
         case EFFECT_FORGET_OPTIONS:
@@ -382,6 +396,12 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
         case EFFECT_UNINITIALIZE_EMULATOR:
             m_emulator->unInitialize();
             break;
+#ifdef DEBUG_LOGGING
+        case EFFECT_DUMP_LOGFILE:
+            dumpLogFile(m_emulator->getLogfile(), m_emulator->getRomname());
+            switchToMenu(effect.getArg());
+            break;
+#endif
     }
     return false; // Not time to start emulation
 };
@@ -403,7 +423,9 @@ void Menu_Handler::addGameToRecent(std::string filepath) {
 void Menu_Handler::createPopup(Popup popup) {
     m_popup = popup;
     m_popup_active = true;
+#ifdef DEBUG_LOGGING
     printf("COMPLETE: Menu Handler: Popup Created\n");
+#endif
 };
 std::vector<uint8_t>* Menu_Handler::getROM() {
     return m_rom;

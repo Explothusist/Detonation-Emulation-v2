@@ -1,6 +1,8 @@
 
 #include "apu.h"
 
+#include "../enable_logging.h"
+
 DMG_APU::DMG_APU() {
 
 };

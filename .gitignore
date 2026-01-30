@@ -1,6 +1,7 @@
 data/
 build/
 saves/
+logs/
 *.o
 *.d
 *.exe

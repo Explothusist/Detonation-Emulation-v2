@@ -2,6 +2,7 @@
 #define DMG_CPU_OPCODES_
 
 #include <cstdint>
+#include <string>
 
 class DMG_CPU;
 
@@ -14,6 +15,9 @@ struct Opcode {
     // uint8_t param2;
 };
 
+std::string getOpcodeName(uint8_t opcode);
+std::string getCBOpcodeName(uint8_t opcode);
+
 // ----------------- Special -----------------
 extern Opcode Opcode_x00_NOP;
 extern Opcode Opcode_x10_STOP;
@@ -24,6 +28,7 @@ extern Opcode Opcode_x27_DAA;
 extern Opcode Opcode_x2F_CPL;
 extern Opcode Opcode_x37_SCF;
 extern Opcode Opcode_x3F_CCF;
+extern Opcode Opcode_xCB_CB_PREFIX;
 
 // ----------------- Stack Special -----------------
 extern Opcode Opcode_x08_LD_NN_SP;
@@ -32,14 +37,14 @@ extern Opcode Opcode_xF8_LD_HL_SP_N;
 extern Opcode Opcode_xF9_LD_SP_HL;
 
 // ----------------- Push and Pop b16 -----------------
-extern Opcode Opcode_xC1_PUSH_BC;
-extern Opcode Opcode_xC5_POP_BC;
-extern Opcode Opcode_xD1_PUSH_DE;
-extern Opcode Opcode_xD5_POP_DE;
-extern Opcode Opcode_xE1_PUSH_HL;
-extern Opcode Opcode_xE5_POP_HL;
-extern Opcode Opcode_xF1_PUSH_AF;
-extern Opcode Opcode_xF5_POP_AF;
+extern Opcode Opcode_xC1_POP_BC;
+extern Opcode Opcode_xC5_PUSH_BC;
+extern Opcode Opcode_xD1_POP_DE;
+extern Opcode Opcode_xD5_PUSH_DE;
+extern Opcode Opcode_xE1_POP_HL;
+extern Opcode Opcode_xE5_PUSH_HL;
+extern Opcode Opcode_xF1_POP_AF;
+extern Opcode Opcode_xF5_PUSH_AF;
 
 // ----------------- Relative Jumps -----------------
 extern Opcode Opcode_x18_JR;
@@ -175,10 +180,10 @@ extern Opcode Opcode_x12_LD_DE_A;
 extern Opcode Opcode_x22_LD_HLI_A;
 extern Opcode Opcode_x32_LD_HLD_A;
 
-extern Opcode Opcode_x0A_LD_BC_A;
-extern Opcode Opcode_x1A_LD_DE_A;
-extern Opcode Opcode_x2A_LD_HLI_A;
-extern Opcode Opcode_x3A_LD_HLD_A;
+extern Opcode Opcode_x0A_LD_A_BC;
+extern Opcode Opcode_x1A_LD_A_DE;
+extern Opcode Opcode_x2A_LD_A_HLI;
+extern Opcode Opcode_x3A_LD_A_HLD;
 
 extern Opcode Opcode_xEA_LD_N16_A;
 extern Opcode Opcode_xFA_LD_A_N16;
@@ -223,9 +228,9 @@ extern Opcode Opcode_x05_DEC_B;
 extern Opcode Opcode_x0D_DEC_C;
 extern Opcode Opcode_x15_DEC_D;
 extern Opcode Opcode_x1D_DEC_E;
-extern Opcode Opcode_x25_DEC_HL;
+extern Opcode Opcode_x25_DEC_H;
 extern Opcode Opcode_x2D_DEC_L;
-extern Opcode Opcode_x35_DEC_H;
+extern Opcode Opcode_x35_DEC_HL;
 extern Opcode Opcode_x3D_DEC_A;
 
 // ----------------- 8 bit Subtraction -----------------

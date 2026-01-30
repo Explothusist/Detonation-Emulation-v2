@@ -1,15 +1,12 @@
-v0.2.0:
-Detailed Build Instructions:
-    - Obtaining SDL3
+v0.3.0:
+Finish Logging and Logfile dumping:
+    See phone notes for what to log
 
 Read in RAM file
 Background for pause menus
-CPU instrs
-
-Emulator itself
 
 Someday:
+T-Cycle Accuracy
 
 Questions:
 Different thread for screen/sound?
-Merge by opcode, by 4 cycle?

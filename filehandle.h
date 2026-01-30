@@ -3,10 +3,15 @@
 
 #include <windows.h>
 #include <vector>
+#include <deque>
 #include <string>
 #include <cstdint>
 
 class Emulator_Options;
+
+void writeTextFile(std::vector<std::string>* lines, std::string directory, std::string filename);
+
+void dumpLogFile(std::deque<std::string>* logfile, std::string romname);
 
 std::vector<std::string>* readRecentGamesFile();
 void saveRecentGamesFile(std::vector<std::string>* recent_games);

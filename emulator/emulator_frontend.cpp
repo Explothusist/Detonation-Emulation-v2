@@ -2,7 +2,8 @@
 #include "emulator_frontend.h"
 
 #include "../menus/MenuHandler.h"
-#include "../SDL-Drawing-Library/DrawingContext.h" // This is mortally incorrect
+#include "../SDL-Drawing-Library/DrawingContext.h"
+#include "../enable_logging.h"
 
 DMG_Emulator::DMG_Emulator(DrawingContext* ctx, Menu_Handler* menus, Emulator_Options* options, EmulatorState &state):
     m_ctx{ ctx },
@@ -18,23 +19,26 @@ DMG_Emulator::DMG_Emulator(DrawingContext* ctx, Menu_Handler* menus, Emulator_Op
 };
 
 void DMG_Emulator::Start_Emulation(std::vector<uint8_t>* rom) {
-    m_cart_details = m_cpu.Trigger_InitializeAll(rom, m_options->m_run_boot_rom);
+    m_cart_details = m_cpu.Trigger_InitializeAll(rom, m_options);
 
     m_menus->replaceKeyEntriesOnMenu(m_cart_details.getCartDetails(), Cartridge_Info); // Cartridge Info
     m_menus->setColorsOnMenu(m_cart_details.getCartDetailColors(), Cartridge_Info);
 
     if (!m_cart_details.hadLoadError() && !(m_options->m_strict_loading && m_cart_details.hadLoadWarning())) {
         if (m_options->m_display_cart_info) { // Confirmation Screen, actually
-            // printf("Well, confirmation screen actually\n");
             m_menus->switchToMenu(Cartridge_Info); // Cartridge Info
-        }else { // Popup Time!!! WORKING HERE
+        }else { // Popup Time!!!
+#ifdef DEBUG_LOGGING
             printf("COMPLETE: Emulation Setup: Emulation Beginning\n");
+#endif
             m_menus->switchToMenu(Pause_Menu); // Pause Menu
             m_state = State_InEmulator;
             m_emulation_begun = true;
         }
     }else {
+#ifdef DEBUG_LOGGING
         printf("ERROR: Emulation Setup: Emulation Aborted\n");
+#endif
         m_menus->createPopup(Popup(
             "An error has occured while loading the cartridge: "+m_cart_details.getFirstError(),
             {"Cancel", "View Details"},
@@ -46,12 +50,17 @@ void DMG_Emulator::Start_Emulation(std::vector<uint8_t>* rom) {
 void DMG_Emulator::Resume_Emulation() {
     if (!m_emulation_begun) {
         if (!m_cart_details.hadLoadError()) {
+#ifdef DEBUG_LOGGING
             printf("COMPLETE: Emulation Setup: Emulation Beginning\n");
+#endif
             m_menus->switchToMenu(Pause_Menu); // Pause Menu
+            m_cpu.UpdateSettings(m_options);
             m_state = State_InEmulator;
             m_emulation_begun = true;
         }else {
+#ifdef DEBUG_LOGGING
             printf("ERROR: Emulation Setup: Emulation Aborted\n");
+#endif
             m_menus->createPopup(Popup(
                 "The cartridge cannot be loaded because of the error: "+m_cart_details.getFirstError(),
                 {"Cancel"},
@@ -63,7 +72,7 @@ void DMG_Emulator::Resume_Emulation() {
     }
 };
 
-void DMG_Emulator::drawSelf() {
+void DMG_Emulator::drawBackground() {
     m_ctx->background(0, 0, 0);
 
     int dmg_width = 160;
@@ -82,6 +91,12 @@ void DMG_Emulator::drawSelf() {
     m_ctx->fill(200, 200, 200);
     m_ctx->rect(base_x, base_y, base_w, base_h);
 
+};
+void DMG_Emulator::runFrame() {
+    drawBackground();
+
+    m_cpu.runFrame();
+
     m_ctx->presentRenderer();
 };
 
@@ -93,4 +108,11 @@ void DMG_Emulator::unInitialize() {
     m_emulation_begun = false;
     m_cart_details = Cart_Details();
     m_cpu.Trigger_PowerCycle();
+};
+
+std::deque<std::string>* DMG_Emulator::getLogfile() {
+    return m_cpu.m_logfile.getLogfile();
+};
+std::string DMG_Emulator::getRomname() {
+    return m_cart_details.m_romname;
 };

@@ -10,6 +10,8 @@ class DMG_PPU {
         void PowerCycle();
         void Reset();
 
+        // void PresentScreen();
+
     private:
 
 };

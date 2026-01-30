@@ -1,8 +1,8 @@
 
 #include "cpu.h"
 
-#include "../menus/MenuHandler.h"
-#include "../SDL-Drawing-Library/DrawingContext.h" // This is mortally incorrect
+#include "../enable_logging.h"
+
 
 DMG_CPU::DMG_CPU():
     m_Memory{ Memory_Handler() },
@@ -13,14 +13,15 @@ DMG_CPU::DMG_CPU():
     m_curr_opcode{ nullptr },
     // m_curr_opcode_length{ 0 },
     m_curr_opcode_mcycle{ 0 },
-    m_abort{ false }
+    m_abort{ false },
+    m_log_line{ "" }
 {
 
 };
 
-Cart_Details DMG_CPU::Trigger_InitializeAll(std::vector<uint8_t>* rom, bool use_boot_rom) {
-    Cart_Details cart_details = m_Memory.Initialize(rom, use_boot_rom);
-    Initialize(use_boot_rom);
+Cart_Details DMG_CPU::Trigger_InitializeAll(std::vector<uint8_t>* rom, Emulator_Options* options) {
+    Cart_Details cart_details = m_Memory.Initialize(rom, options->m_run_boot_rom);
+    Initialize(options->m_run_boot_rom, options->m_log_length, options->m_log_enable);
     m_ppu.Initialize();
     m_apu.Initialize();
     return cart_details;
@@ -38,7 +39,7 @@ void DMG_CPU::Trigger_ResetButton() {
     m_apu.Reset();
 };
 
-void DMG_CPU::Initialize(bool use_boot_rom) {
+void DMG_CPU::Initialize(bool use_boot_rom, int log_length, bool log_enable) {
     if (use_boot_rom) {
         m_regs.set(Reg_u16::PC, 0);
         m_regs.set(Reg_u16::SP, 0xfffe); // 0xffff is not RAM
@@ -54,6 +55,9 @@ void DMG_CPU::Initialize(bool use_boot_rom) {
         m_regs.set(Reg_u8::L, 0x46);
         m_regs.set(Reg_u16::SP, 0xfffe);
     }
+    m_logfile.setOptions(log_length, log_enable);
+    m_log_enable = log_enable;
+    m_logfile.println("Emulator Initialized");
 };
 void DMG_CPU::PowerCycle() {
     Reset(); // CPU never keeps anything
@@ -64,10 +68,19 @@ void DMG_CPU::Reset() {
     // m_curr_opcode_length = 0;
     m_curr_opcode_mcycle = 0;
     m_abort = false;
+    m_log_line = "";
+    m_logfile.clearLog();
+};
+void DMG_CPU::UpdateSettings(Emulator_Options* options) {
+    m_log_enable = options->m_log_enable;
+    m_logfile.setOptions(options->m_log_length, options->m_log_enable);
 };
 
 
 Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
+    // if (opcode == 0xFF) {
+    //     callAbort();
+    // }
     switch (opcode) {
         case 0x00: return &Opcode_x00_NOP;
         case 0x01: return &Opcode_x01_LD_BC_N16;
@@ -79,7 +92,7 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x07: return &Opcode_x07_RLCA;
         case 0x08: return &Opcode_x08_LD_NN_SP;
         case 0x09: return &Opcode_x09_ADD_HL_BC;
-        case 0x0A: return &Opcode_x0A_LD_BC_A;
+        case 0x0A: return &Opcode_x0A_LD_A_BC;
         case 0x0B: return &Opcode_x0B_DEC_BC;
         case 0x0C: return &Opcode_x0C_INC_C;
         case 0x0D: return &Opcode_x0D_DEC_C;
@@ -95,7 +108,7 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x17: return &Opcode_x17_RLA;
         case 0x18: return &Opcode_x18_JR;
         case 0x19: return &Opcode_x19_ADD_HL_DE;
-        case 0x1A: return &Opcode_x1A_LD_DE_A;
+        case 0x1A: return &Opcode_x1A_LD_A_DE;
         case 0x1B: return &Opcode_x1B_DEC_DE;
         case 0x1C: return &Opcode_x1C_INC_E;
         case 0x1D: return &Opcode_x1D_DEC_E;
@@ -106,12 +119,12 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x22: return &Opcode_x22_LD_HLI_A;
         case 0x23: return &Opcode_x23_INC_HL;
         case 0x24: return &Opcode_x24_INC_H;
-        case 0x25: return &Opcode_x25_DEC_HL;
+        case 0x25: return &Opcode_x25_DEC_H;
         case 0x26: return &Opcode_x26_LD_H_N8;
         case 0x27: return &Opcode_x27_DAA;
         case 0x28: return &Opcode_x28_JR_Z;
         case 0x29: return &Opcode_x29_ADD_HL_HL;
-        case 0x2A: return &Opcode_x2A_LD_HLI_A;
+        case 0x2A: return &Opcode_x2A_LD_A_HLI;
         case 0x2B: return &Opcode_x2B_DEC_HL;
         case 0x2C: return &Opcode_x2C_INC_L;
         case 0x2D: return &Opcode_x2D_DEC_L;
@@ -122,12 +135,12 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0x32: return &Opcode_x32_LD_HLD_A;
         case 0x33: return &Opcode_x33_INC_SP;
         case 0x34: return &Opcode_x34_INC_HL;
-        case 0x35: return &Opcode_x35_DEC_H;
+        case 0x35: return &Opcode_x35_DEC_HL;
         case 0x36: return &Opcode_x36_LD_HL_N8;
         case 0x37: return &Opcode_x37_SCF;
         case 0x38: return &Opcode_x38_JR_C;
         case 0x39: return &Opcode_x39_ADD_HL_SP;
-        case 0x3A: return &Opcode_x3A_LD_HLD_A;
+        case 0x3A: return &Opcode_x3A_LD_A_HLD;
         case 0x3B: return &Opcode_x3B_DEC_SP;
         case 0x3C: return &Opcode_x3C_INC_A;
         case 0x3D: return &Opcode_x3D_DEC_A;
@@ -262,27 +275,27 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xBE: return &Opcode_xBE_CP_A_HL;
         case 0xBF: return &Opcode_xBF_CP_A_A;
         case 0xC0: return &Opcode_xC0_RET_NZ;
-        case 0xC1: return &Opcode_xC1_PUSH_BC;
+        case 0xC1: return &Opcode_xC1_POP_BC;
         case 0xC2: return &Opcode_xC2_JP_NZ;
         case 0xC3: return &Opcode_xC3_JP;
         case 0xC4: return &Opcode_xC4_CALL_NZ;
-        case 0xC5: return &Opcode_xC5_POP_BC;
+        case 0xC5: return &Opcode_xC5_PUSH_BC;
         case 0xC6: return &Opcode_xC6_ADD_A_N8;
         case 0xC7: return &Opcode_xC7_RST_00;
         case 0xC8: return &Opcode_xC8_RET_Z;
         case 0xC9: return &Opcode_xC9_RET;
         case 0xCA: return &Opcode_xCA_JP_Z;
-
+        case 0xCB: return &Opcode_xCB_CB_PREFIX;
         case 0xCC: return &Opcode_xCC_CALL_Z;
         case 0xCD: return &Opcode_xCD_CALL;
         case 0xCE: return &Opcode_xCE_ADC_A_N8;
         case 0xCF: return &Opcode_xCF_RST_08;
         case 0xD0: return &Opcode_xD0_RET_NC;
-        case 0xD1: return &Opcode_xD1_PUSH_DE;
+        case 0xD1: return &Opcode_xD1_POP_DE;
         case 0xD2: return &Opcode_xD2_JP_NC;
         case 0xD3: return &Opcode_xD3_INVALID;
         case 0xD4: return &Opcode_xD4_CALL_NC;
-        case 0xD5: return &Opcode_xD5_POP_DE;
+        case 0xD5: return &Opcode_xD5_PUSH_DE;
         case 0xD6: return &Opcode_xD6_SUB_A_N8;
         case 0xD7: return &Opcode_xD7_RST_10;
         case 0xD8: return &Opcode_xD8_RET_C;
@@ -294,11 +307,11 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xDE: return &Opcode_xDE_SBC_A_N8;
         case 0xDF: return &Opcode_xDF_RST_18;
         case 0xE0: return &Opcode_xE0_LDH_A8_A;
-        case 0xE1: return &Opcode_xE1_PUSH_HL;
+        case 0xE1: return &Opcode_xE1_POP_HL;
         case 0xE2: return &Opcode_xE2_LDH_C_A;
         case 0xE3: return &Opcode_xE3_INVALID;
         case 0xE4: return &Opcode_xE4_INVALID;
-        case 0xE5: return &Opcode_xE5_POP_HL;
+        case 0xE5: return &Opcode_xE5_PUSH_HL;
         case 0xE6: return &Opcode_xE6_AND_A_N8;
         case 0xE7: return &Opcode_xE7_RST_20;
         case 0xE8: return &Opcode_xE8_ADD_SP_N;
@@ -310,11 +323,11 @@ Opcode* DMG_CPU::parseOpcode(uint8_t opcode) {
         case 0xEE: return &Opcode_xEE_XOR_A_N8;
         case 0xEF: return &Opcode_xEF_RST_28;
         case 0xF0: return &Opcode_xF0_LDH_A_A8;
-        case 0xF1: return &Opcode_xF1_PUSH_AF;
+        case 0xF1: return &Opcode_xF1_POP_AF;
         case 0xF2: return &Opcode_xF2_LDH_A_C;
         case 0xF3: return &Opcode_xF3_DI;
         case 0xF4: return &Opcode_xF4_INVALID;
-        case 0xF5: return &Opcode_xF5_POP_AF;
+        case 0xF5: return &Opcode_xF5_PUSH_AF;
         case 0xF6: return &Opcode_xF6_OR_A_N8;
         case 0xF7: return &Opcode_xF7_RST_30;
         case 0xF8: return &Opcode_xF8_LD_HL_SP_N;
@@ -594,63 +607,81 @@ void DMG_CPU::clearOpcode() {
     m_curr_opcode_mcycle = 0;
 };
 void DMG_CPU::loadCBOpcode() {
-    clearOpcode();
-    uint8_t opcode = PC_Eat_Byte();
-    m_curr_opcode = parseCBOpcode(opcode);
+    // clearOpcode();
+    // uint8_t opcode = PC_Eat_Byte();
+    // m_curr_opcode = parseCBOpcode(opcode);
+    m_read_cb_opcode = true;
 };
 void DMG_CPU::runMCycle() {
-    // Interrupts
-    m_Memory.handleIME();
+    if (!m_abort) {
+        // Interrupts
+        m_Memory.handleIME();
 
-    if (!m_stopped && !m_halted) {
-        if (!m_curr_opcode || m_curr_opcode_mcycle >= m_curr_opcode->length) {
-            uint8_t opcode = PC_Eat_Byte();
-            if (m_halt_bug) { // Causes double fetch
-                m_regs.set(Reg_u16::PC, m_regs.get(Reg_u16::PC) - 1);
-                m_halt_bug = false;
+        if (!m_stopped && !m_halted) {
+            if (!m_curr_opcode || m_curr_opcode_mcycle >= m_curr_opcode->length) {
+#ifdef DEBUG_LOGGING
+                if (m_log_enable) {
+                    m_logfile.println(m_log_line); // Print the log for the previous instruction
+                    m_log_line = "";
+                }
+#endif
+
+                uint8_t opcode = PC_Eat_Byte();
+#ifdef DEBUG_LOGGING
+//                 printf("Opcode Run: PC: %s, Opcode: %s\n", to_b16_out(m_regs.get(Reg_u16::PC)).c_str(), to_b8_out(opcode).c_str());
+                if (m_log_enable) {
+                    m_log_line += std::string("Opcode: ")+(m_read_cb_opcode ? "0xCB " : "")+"0x"+to_b8_out(opcode)+", "
+                            +(!m_read_cb_opcode ? getOpcodeName(opcode) : getCBOpcodeName(opcode));
+                }
+#endif
+                if (m_halt_bug) { // Causes double fetch
+                    m_regs.set(Reg_u16::PC, m_regs.get(Reg_u16::PC) - 1);
+                    m_halt_bug = false;
+                }
+                if (!m_read_cb_opcode) {
+                    m_curr_opcode = parseOpcode(opcode);
+                }else {
+                    m_curr_opcode = parseCBOpcode(opcode);
+                    m_read_cb_opcode = false;
+                }
+                // m_curr_opcode_length = m_curr_opcode->length; // For the variable length opcodes
+                m_curr_opcode_mcycle = 0;
             }
-            m_curr_opcode = parseOpcode(opcode);
-            // m_curr_opcode_length = m_curr_opcode->length; // For the variable length opcodes
-            m_curr_opcode_mcycle = 0;
+
+            (m_curr_opcode->mcycles[m_curr_opcode_mcycle])(*this);
+            m_curr_opcode_mcycle += 1;
+
+            m_Memory.freeBus();
         }
-
-        (m_curr_opcode->mcycles[m_curr_opcode_mcycle])(*this);
-        m_curr_opcode_mcycle += 1;
-
-        m_Memory.freeBus();
+        // Timers
+        // PPU
+        // APU
     }
-    // Timers
-    // PPU
-    // APU
-    m_cycle_count += 4;
 };
 void DMG_CPU::runTCycle() {
     // Optional later expansion
+};
+
+void DMG_CPU::runFrame() {
+    m_cycle_count = 0;
+    while (m_cycle_count < k_Cycle_Per_Frame) {
+        runMCycle();
+        m_cycle_count += 4;
+    }
+    // m_ppu.PresentScreen();
 };
 
 void DMG_CPU::callAbort() {
     m_abort = true;
 };
 
-// void DMG_CPU::consumeCycles(int cycles) { // Flip the system and splice the opcodes by cycle (or T-cycle accurate?)
-//     m_cycle_count += cycles;
-
-//     // pollEvents(); // Not so often
-//     // m_Screen.runCycles(cycles, m_cycle_count); // Possibly not so often
-//     // m_Sound.runCycles(cycles, m_cycle_count);
-
-//     // if m_cycle_count > c_ONE_FRAME: m_Screen.presentRenderer(), m_cycle_count -= c_ONE_FRAME
-
-//     // now = timeNS // Possibly avoid sleeping
-//     // gap = last+c_4_CYCLES - now
-//     // if gap > 0: delay(gap)
-//     // last += c_4_CYCLES
-// };
-
 
 uint8_t DMG_CPU::PC_Eat_Byte() {
     m_Memory.latchBus(m_regs.get(Reg_u16::PC));
     uint8_t ret = m_Memory.Read(); // Read from <PC>
+// #ifdef DEBUG_LOGGING
+//     printf("PC Eat: %s, Value: %s\n", padLeft(to_string_base(m_regs.get(Reg_u16::PC), 16), 4, '0').c_str(), padLeft(to_string_base(ret, 16), 2, '0').c_str());
+// #endif
     m_regs.set(Reg_u16::PC, m_regs.get(Reg_u16::PC) + 1); // Increment PC
     return ret;
 };
@@ -660,8 +691,8 @@ uint8_t DMG_CPU::ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
     uint8_t masked = static_cast<uint8_t>(unmasked & 0xff);
     m_regs.set(Reg_flag::Z, (masked == 0));
     m_regs.set(Reg_flag::N, false);
-    m_regs.set(Reg_flag::H, ((half >> 4) & 0b1 == 1));
-    m_regs.set(Reg_flag::C, ((unmasked >> 8) & 0b1 == 1));
+    m_regs.set(Reg_flag::H, (((half >> 4) & 0b1) == 1));
+    m_regs.set(Reg_flag::C, (((unmasked >> 8) & 0b1) == 1));
     return masked;
 };
 uint8_t DMG_CPU::ALU_B8_SUBBER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
@@ -686,15 +717,3 @@ void DMG_CPU::HALT_Bug() {
 bool DMG_CPU::WAKE() {
     return false; // Returns true if any buttons are pressed
 };
-// void DMG_CPU::PUSH_B16(Reg_u8 reg_H, Reg_u8 reg_L) {
-//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) - 1); // Decrement SP
-//     m_Memory.Write(m_regs.get(Reg_u16::SP), m_regs.get(reg_H)); // Write High
-//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) - 1); // Decrement SP
-//     m_Memory.Write(m_regs.get(Reg_u16::SP), m_regs.get(reg_L)); // Write Low
-// };
-// void DMG_CPU::POP_B16(Reg_u8 reg_H, Reg_u8 reg_L) {
-//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) + 1); // Increment SP
-//     m_regs.set(reg_L, m_Memory.Read(m_regs.get(Reg_u16::SP))); // Read Low
-//     m_regs.set(Reg_u16::SP, m_regs.get(Reg_u16::SP) + 1); // Increment SP
-//     m_regs.set(reg_H, m_Memory.Read(m_regs.get(Reg_u16::SP))); // Read High
-// };
