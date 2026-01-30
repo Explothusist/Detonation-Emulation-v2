@@ -32,6 +32,10 @@ enum class Reg_flag : uint8_t {
     NZ = 4, NN = 5, NH = 6, NC = 7 // Inverses (for jumps/calls)
 };
 
+std::string getRegName(Reg_u8 reg);
+std::string getRegName(Reg_u16 reg);
+std::string getRegName(Reg_flag reg);
+
 class Register_Handler {
     public:
         Register_Handler();
@@ -45,9 +49,8 @@ class Register_Handler {
 
         void latchFlags();
         [[nodiscard]] bool getLatched(Reg_flag reg) const;
-        void latchBus(uint16_t addr);
-        void freeBus();
-        [[nodiscard]] uint16_t getLatchedAddress() const;
+
+        std::string dumpState();
 
     private:
         uint8_t F;

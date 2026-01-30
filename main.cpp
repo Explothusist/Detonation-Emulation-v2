@@ -40,7 +40,7 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
         },
         {EntryEffect(EFFECT_TO_MENU, Recent_Menu), EntryEffect(EFFECT_SELECT_ROM_RELOAD_RECENT, -1), EntryEffect(EFFECT_TO_MENU, Keybindings_Menu), EntryEffect(EFFECT_TO_MENU, Options_Menu),
 #ifdef DEBUG_LOGGING
-            EntryEffect(EFFECT_TO_MENU, Logfile_Menu_Main)
+            EntryEffect(EFFECT_TO_MENU, Logfile_Menu)
 #endif
 }
     );
@@ -53,7 +53,7 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
         },
         {EntryEffect(EFFECT_BACK_TO_EMULATOR, -1), EntryEffect(EFFECT_RETURN_TO_MAIN, Main_Menu), EntryEffect(EFFECT_TO_MENU, Keybindings_Menu), EntryEffect(EFFECT_TO_MENU, Options_Menu),
 #ifdef DEBUG_LOGGING
-            EntryEffect(EFFECT_TO_MENU, Logfile_Menu_Pause)
+            EntryEffect(EFFECT_TO_MENU, Logfile_Menu)
 #endif
         }
     );
@@ -124,22 +124,7 @@ void setupMenus(Menu_Handler* m_menus, std::vector<std::string>* recent_games, s
     );
     
 #ifdef DEBUG_LOGGING
-    m_menus->addMenu( // Logfile Menu (Main)
-        "Logfile",
-        {
-            "Log Enabled: "+std::string(options->m_log_enable ? "True" : "False"),
-            "Log Length: "+std::to_string(options->m_log_length),
-            "Cancel",
-            "Save"
-        },
-        {
-            EntryEffect(EFFECT_TOGGLE, TOGGLE_LOG_ENABLE),
-            EntryEffect(EFFECT_TOGGLE, TOGGLE_LOG_LENGTH),
-            EntryEffect(EFFECT_FORGET_OPTIONS, -1),
-            EntryEffect(EFFECT_SAVE_OPTIONS, -1)
-        }
-    );
-    m_menus->addMenu( // Logfile Menu (Pause)
+    m_menus->addMenu( // Logfile Menu
         "Logfile",
         {
             "Log Enabled: "+std::string(options->m_log_enable ? "True" : "False"),

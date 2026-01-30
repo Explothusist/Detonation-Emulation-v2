@@ -2,6 +2,7 @@
 #include "cpu.h"
 
 #include "../enable_logging.h"
+#include "emulator_log.h"
 
 
 DMG_CPU::DMG_CPU():
@@ -13,8 +14,7 @@ DMG_CPU::DMG_CPU():
     m_curr_opcode{ nullptr },
     // m_curr_opcode_length{ 0 },
     m_curr_opcode_mcycle{ 0 },
-    m_abort{ false },
-    m_log_line{ "" }
+    m_abort{ false }
 {
 
 };
@@ -68,7 +68,6 @@ void DMG_CPU::Reset() {
     // m_curr_opcode_length = 0;
     m_curr_opcode_mcycle = 0;
     m_abort = false;
-    m_log_line = "";
     m_logfile.clearLog();
 };
 void DMG_CPU::UpdateSettings(Emulator_Options* options) {
@@ -621,8 +620,7 @@ void DMG_CPU::runMCycle() {
             if (!m_curr_opcode || m_curr_opcode_mcycle >= m_curr_opcode->length) {
 #ifdef DEBUG_LOGGING
                 if (m_log_enable) {
-                    m_logfile.println(m_log_line); // Print the log for the previous instruction
-                    m_log_line = "";
+                    m_logfile.dumpLine(); // Print the log for the previous instruction
                 }
 #endif
 
@@ -630,8 +628,9 @@ void DMG_CPU::runMCycle() {
 #ifdef DEBUG_LOGGING
 //                 printf("Opcode Run: PC: %s, Opcode: %s\n", to_b16_out(m_regs.get(Reg_u16::PC)).c_str(), to_b8_out(opcode).c_str());
                 if (m_log_enable) {
-                    m_log_line += std::string("Opcode: ")+(m_read_cb_opcode ? "0xCB " : "")+"0x"+to_b8_out(opcode)+", "
-                            +(!m_read_cb_opcode ? getOpcodeName(opcode) : getCBOpcodeName(opcode));
+                    m_logfile.print(std::string("Opcode: ")+(m_read_cb_opcode ? "0xCB " : "")+"0x"+to_b8_out(opcode)+", "
+                            +(!m_read_cb_opcode ? getOpcodeName(opcode) : getCBOpcodeName(opcode))+"; ");
+                    m_logfile.print(m_regs.dumpState() + "; ");
                 }
 #endif
                 if (m_halt_bug) { // Causes double fetch
@@ -652,6 +651,11 @@ void DMG_CPU::runMCycle() {
             m_curr_opcode_mcycle += 1;
 
             m_Memory.freeBus();
+#ifdef DEBUG_LOGGING
+            if (m_log_enable) {
+                m_logfile.print(std::string("($M-Cycle) "));
+            }
+#endif
         }
         // Timers
         // PPU
@@ -677,12 +681,29 @@ void DMG_CPU::callAbort() {
 
 
 uint8_t DMG_CPU::PC_Eat_Byte() {
+#ifdef DEBUG_LOGGING
+    bool old_log_flag = m_log_enable;
+    m_log_enable = false;
+#endif
+
+#ifdef DEBUG_LOGGING
+    uint16_t addr = m_regs.get(Reg_u16::PC);
+    m_Memory.latchBus(addr);
+#else
     m_Memory.latchBus(m_regs.get(Reg_u16::PC));
+#endif
     uint8_t ret = m_Memory.Read(); // Read from <PC>
 // #ifdef DEBUG_LOGGING
 //     printf("PC Eat: %s, Value: %s\n", padLeft(to_string_base(m_regs.get(Reg_u16::PC), 16), 4, '0').c_str(), padLeft(to_string_base(ret, 16), 2, '0').c_str());
 // #endif
     m_regs.set(Reg_u16::PC, m_regs.get(Reg_u16::PC) + 1); // Increment PC
+    
+#ifdef DEBUG_LOGGING
+    m_log_enable = old_log_flag;
+    if (m_log_enable) {
+        m_logfile.print("PC Eat Byte addr "+to_b16_out(addr)+" value "+to_b8_out(ret)+", ");
+    }
+#endif
     return ret;
 };
 uint8_t DMG_CPU::ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
@@ -693,6 +714,13 @@ uint8_t DMG_CPU::ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
     m_regs.set(Reg_flag::N, false);
     m_regs.set(Reg_flag::H, (((half >> 4) & 0b1) == 1));
     m_regs.set(Reg_flag::C, (((unmasked >> 8) & 0b1) == 1));
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Performed ALU "+to_b8_out(num1)+" + "+to_b8_out(num2)
+                +(carry_bit != 0 ? " + "+to_b8_out(carry_bit) : "")
+                +" = "+to_b8_out(masked)+", ");
+        }
+    #endif
     return masked;
 };
 uint8_t DMG_CPU::ALU_B8_SUBBER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
@@ -703,17 +731,44 @@ uint8_t DMG_CPU::ALU_B8_SUBBER(uint8_t num1, uint8_t num2, uint8_t carry_bit) {
     m_regs.set(Reg_flag::N, true);
     m_regs.set(Reg_flag::H, (num1 & 0xf) < ((num2 & 0xf) + carry_bit));
     m_regs.set(Reg_flag::C, num1 < (num2 + carry_bit));
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Performed ALU "+to_b8_out(num1)+" - "+to_b8_out(num2)
+                +(carry_bit != 0 ? " - "+to_b8_out(carry_bit) : "")
+                +" = "+to_b8_out(masked)+", ");
+        }
+    #endif
     return masked;
 };
 void DMG_CPU::STOP() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Set STOP, ");
+        }
+    #endif
     m_stopped = true;
 };
 void DMG_CPU::HALT() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Set HALT, ");
+        }
+    #endif
     m_halted = true;
 };
 void DMG_CPU::HALT_Bug() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Triggered Halt Bug, ");
+        }
+    #endif
     m_halt_bug = true;
 };
 bool DMG_CPU::WAKE() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Check WAKE (joysticks), ");
+        }
+    #endif
     return false; // Returns true if any buttons are pressed
 };

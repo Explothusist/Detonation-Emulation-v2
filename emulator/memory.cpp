@@ -6,6 +6,56 @@
 #include <cctype>
 #include "../utils.h"
 #include "../enable_logging.h"
+#include "emulator_log.h"
+
+
+std::string getRegName(Reg_u8 reg) {
+    switch (reg) {
+        case Reg_u8::A: return "A";
+        case Reg_u8::F: return "F";
+        case Reg_u8::B: return "B";
+        case Reg_u8::C: return "C";
+        case Reg_u8::D: return "D";
+        case Reg_u8::E: return "E";
+        case Reg_u8::H: return "H";
+        case Reg_u8::L: return "L";
+        case Reg_u8::SP_H: return "SP_H";
+        case Reg_u8::SP_L: return "SP_L";
+        case Reg_u8::PC_H: return "PC_H";
+        case Reg_u8::PC_L: return "PC_L";
+        case Reg_u8::WZ_H: return "WZ_H";
+        case Reg_u8::WZ_L: return "WZ_L";
+        case Reg_u8::temp_H: return "temp_H";
+        case Reg_u8::temp_L: return "temp_L";
+    }
+    return "";
+};
+std::string getRegName(Reg_u16 reg) {
+    switch (reg) {
+        case Reg_u16::AF: return "AF";
+        case Reg_u16::BC: return "BC";
+        case Reg_u16::DE: return "DE";
+        case Reg_u16::HL: return "HL";
+        case Reg_u16::SP: return "SP";
+        case Reg_u16::PC: return "PC";
+        case Reg_u16::WZ: return "WZ";
+        case Reg_u16::temp: return "temp";
+    }
+    return "";
+};
+std::string getRegName(Reg_flag reg) {
+    switch (reg) {
+        case Reg_flag::Z: return "fZ";
+        case Reg_flag::N: return "fN";
+        case Reg_flag::H: return "fH";
+        case Reg_flag::C: return "fC";
+        case Reg_flag::NZ: return "fNZ";
+        case Reg_flag::NN: return "fNN";
+        case Reg_flag::NH: return "fNH";
+        case Reg_flag::NC: return "fNC";
+    }
+    return "";
+};
 
 Register_Handler::Register_Handler():
     F{ 0 },
@@ -22,6 +72,11 @@ Register_Handler::Register_Handler():
 
 };
 [[nodiscard]] uint8_t Register_Handler::get(Reg_u8 reg) const {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Read Reg_u8 "+getRegName(reg)+", ");
+        }
+    #endif
     switch (reg) {
         case Reg_u8::A: return A;
         case Reg_u8::F: return F;
@@ -43,6 +98,11 @@ Register_Handler::Register_Handler():
     return 0;
 };
 void Register_Handler::set(Reg_u8 reg, uint8_t value) {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Set Reg_u8 "+getRegName(reg)+" to "+to_b8_out(value)+", ");
+        }
+    #endif
     switch (reg) {
         case Reg_u8::A: A = value; break;
         case Reg_u8::F: F = value & 0xf0; break;
@@ -63,6 +123,11 @@ void Register_Handler::set(Reg_u8 reg, uint8_t value) {
     }
 };
 [[nodiscard]] uint16_t Register_Handler::get(Reg_u16 reg) const {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Read Reg_u16 "+getRegName(reg)+", ");
+        }
+    #endif
     switch (reg) {
         case Reg_u16::AF: return ((uint16_t(A) << 8) | F);
         case Reg_u16::BC: return ((uint16_t(B) << 8) | C);
@@ -76,6 +141,11 @@ void Register_Handler::set(Reg_u8 reg, uint8_t value) {
     return 0;
 };
 void Register_Handler::set(Reg_u16 reg, uint16_t value) {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Set Reg_u16 "+getRegName(reg)+" to "+to_b16_out(value)+", ");
+        }
+    #endif
     switch (reg) {
         case Reg_u16::AF: A = (value >> 8); F = value & 0xf0; break;
         case Reg_u16::BC: B = (value >> 8); C = value & 0xff; break;
@@ -88,6 +158,11 @@ void Register_Handler::set(Reg_u16 reg, uint16_t value) {
     }
 };
 [[nodiscard]] bool Register_Handler::get(Reg_flag reg) const {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Read Reg_flag "+getRegName(reg)+", ");
+        }
+    #endif
     switch (reg) {
         case Reg_flag::Z: return bool((F >> 7) & 1);
         case Reg_flag::N: return bool((F >> 6) & 1);
@@ -101,15 +176,36 @@ void Register_Handler::set(Reg_u16 reg, uint16_t value) {
     return false;
 };
 void Register_Handler::set(Reg_flag reg, bool value) {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Read Reg_flag "+getRegName(reg)+" to "+std::to_string(value)+", ");
+        }
+    #endif
     switch (reg) {
         case Reg_flag::Z: F = ((F & 0b0111'0000) | (uint8_t(value) << 7)); break;
         case Reg_flag::N: F = ((F & 0b1011'0000) | (uint8_t(value) << 6)); break;
         case Reg_flag::H: F = ((F & 0b1101'0000) | (uint8_t(value) << 5)); break;
         case Reg_flag::C: F = ((F & 0b1110'0000) | (uint8_t(value) << 4)); break;
-        // case Reg_flag::NZ: F = ((F & 0b0111'0000) | (uint8_t(!value) << 7)); break; // Reading is one thing (jumps/calls)
-        // case Reg_flag::NN: F = ((F & 0b1011'0000) | (uint8_t(!value) << 6)); break; // But setting should never happen
-        // case Reg_flag::NH: F = ((F & 0b1101'0000) | (uint8_t(!value) << 5)); break;
-        // case Reg_flag::NC: F = ((F & 0b1110'0000) | (uint8_t(!value) << 4)); break;
+        case Reg_flag::NZ: // Reading is one thing (jumps/calls), But setting should never happen
+#ifdef DEBUG_LOGGING
+            printf("Cannot write to NZ flag!\n");
+#endif
+            break;
+        case Reg_flag::NN:  
+#ifdef DEBUG_LOGGING
+            printf("Cannot write to NN flag!\n");
+#endif
+            break;
+        case Reg_flag::NH: 
+#ifdef DEBUG_LOGGING
+            printf("Cannot write to NH flag!\n");
+#endif
+            break; 
+        case Reg_flag::NC: 
+#ifdef DEBUG_LOGGING
+            printf("Cannot write to NC flag!\n");
+#endif
+            break; 
         default:
 #ifdef DEBUG_LOGGING
             printf("Cannot write to N* flag!\n");
@@ -118,9 +214,19 @@ void Register_Handler::set(Reg_flag reg, bool value) {
     }
 };
 void Register_Handler::latchFlags() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Latched Flags, ");
+        }
+    #endif
     F_latched = F;
 };
 [[nodiscard]] bool Register_Handler::getLatched(Reg_flag reg) const {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Read latched Reg_flag "+getRegName(reg)+", ");
+        }
+    #endif
     switch (reg) {
         case Reg_flag::Z: return bool((F_latched >> 7) & 1);
         case Reg_flag::N: return bool((F_latched >> 6) & 1);
@@ -132,6 +238,21 @@ void Register_Handler::latchFlags() {
         case Reg_flag::NC: return !bool((F_latched >> 4) & 1);
     }
     return false;
+};
+
+std::string Register_Handler::dumpState() {
+    return std::string("A: ")+to_b8_out(A)
+        + std::string(" F: ")+to_b8_out(F)
+        + std::string(" B: ")+to_b8_out(B)
+        + std::string(" C: ")+to_b8_out(C)
+        + std::string(" D: ")+to_b8_out(D)
+        + std::string(" E: ")+to_b8_out(E)
+        + std::string(" H: ")+to_b8_out(H)
+        + std::string(" L: ")+to_b8_out(L)
+        + std::string(" PC: ")+to_b16_out(PC)
+        + std::string(" SP: ")+to_b16_out(SP)
+        + std::string(" WZ: ")+to_b16_out(WZ)
+        + std::string(" temp: ")+to_b8_out(temp);
 };
 
 
@@ -1067,6 +1188,11 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
 };
 
 void Memory_Handler::latchBus(uint16_t addr) {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Bus Latched to "+to_b16_out(addr)+", ");
+        }
+    #endif
     if (!m_bus_latched) {
         m_latched_addr = addr;
         m_bus_latched = true;
@@ -1077,12 +1203,20 @@ void Memory_Handler::latchBus(uint16_t addr) {
     }
 };
 void Memory_Handler::freeBus() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Bus Freed, ");
+        }
+    #endif
     m_bus_latched = false;
 };
 uint8_t Memory_Handler::Read() {
     if (!m_bus_latched) {
 #ifdef DEBUG_LOGGING
         printf("ERROR: Memory Handler: Read: Bus Not Latched\n");
+        if (m_log_enable) {
+            m_logfile.print("Tried to Read without Latching Bus, ");
+        }
 #endif
         return m_open_bus;
     }
@@ -1125,16 +1259,29 @@ uint8_t Memory_Handler::Read() {
         ret = XFFFF_IE;
     }
     m_open_bus = ret; // Update m_open_bus
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Read from "+to_b16_out(address)+" value "+to_b8_out(ret)+", ");
+        }
+    #endif
     return ret;
 };
 void Memory_Handler::Write(uint8_t value) {
     if (!m_bus_latched) {
 #ifdef DEBUG_LOGGING
         printf("ERROR: Memory Handler: Write: Bus Not Latched\n");
+        if (m_log_enable) {
+            m_logfile.print("Tried to Write without Latching Bus, ");
+        }
 #endif
         return;
     }
     uint16_t address = m_latched_addr;
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Write to "+to_b16_out(address)+" value "+to_b8_out(value)+", ");
+        }
+    #endif
     m_open_bus = value;
     if (address < 0x4000) {
         // X0000_ROM_STATIC[address] = value; // READ Only Memory
@@ -1248,10 +1395,20 @@ std::string Memory_Handler::readROMName(std::vector<uint8_t>* rom) {
 };
 
 void Memory_Handler::_Set_IME(bool value) {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Write to IME value "+std::to_string(value)+", ");
+        }
+    #endif
     IME = value;
     IME_Delayed = value; // So that Delayed doesn't undo the change
 };
 void Memory_Handler::_Set_IME_Delayed(bool value) {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Write to IME delayed value "+std::to_string(value)+", ");
+        }
+    #endif
     IME_Delayed = value;
 };
 void Memory_Handler::handleIME() {
@@ -1261,9 +1418,19 @@ void Memory_Handler::handleIME() {
 };
 
 bool Memory_Handler::_InterruptsPending() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Checked Pending Interrupts, ");
+        }
+    #endif
     return (_Get(0xff0f) & _Get(0xffff) & 0x1f) == 0;
 };
 bool Memory_Handler::_InterruptsEnabled() {
+    #ifdef DEBUG_LOGGING
+        if (m_log_enable) {
+            m_logfile.print("Checked Interrupts Enabled, ");
+        }
+    #endif
     return IME;
 };
 

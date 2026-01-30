@@ -3,6 +3,7 @@
 #include "memory.h"
 #include "cpu.h"
 #include "../enable_logging.h"
+#include "emulator_log.h"
 
 #ifdef __GNUC__
     #pragma GCC diagnostic push

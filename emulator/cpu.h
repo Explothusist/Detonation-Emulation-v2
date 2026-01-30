@@ -7,7 +7,7 @@
 #include "ppu.h"
 #include "apu.h"
 #include "opcodes.h"
-#include "emulator_log.h"
+// #include "emulator_log.h"
 #include "../utils.h"
 
 class Menu_Handler;
@@ -53,7 +53,7 @@ class DMG_CPU {
         Register_Handler m_regs;
         DMG_PPU m_ppu;
         DMG_APU m_apu;
-        Emulator_Logfile m_logfile;
+        // Emulator_Logfile m_logfile;
     private:
         int m_cycle_count;
 
@@ -68,8 +68,8 @@ class DMG_CPU {
 
         bool m_abort;
 
-        std::string m_log_line;
-        bool m_log_enable;
+        // std::string m_log_line;
+        // bool m_log_enable;
 };
 
 #endif

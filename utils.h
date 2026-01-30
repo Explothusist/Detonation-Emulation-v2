@@ -7,6 +7,7 @@
 #include <string>
 
 #include "enable_logging.h"
+// #include "emulator/emulator_log.h" // No, absolutely not
 
 typedef enum {
     Key_Up,
@@ -32,8 +33,7 @@ typedef enum {
     Options_Menu,
     Cartridge_Info,
 #ifdef DEBUG_LOGGING
-    Logfile_Menu_Main,
-    Logfile_Menu_Pause
+    Logfile_Menu
 #endif
 } Menu_ID;
 

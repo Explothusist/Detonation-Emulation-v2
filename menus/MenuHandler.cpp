@@ -357,7 +357,19 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
             break;
         case EFFECT_FORGET_OPTIONS:
             m_options->forget_temps();
-            m_menus[m_menu_selected].replaceKeyEntry(0, (m_options->m_run_boot_rom ? "True" : "False"));
+            switch (m_menu_selected) {
+                case Options_Menu:
+                    m_menus[m_menu_selected].replaceKeyEntry(0, (m_options->m_run_boot_rom ? "True" : "False"));
+                    m_menus[m_menu_selected].replaceKeyEntry(1, (m_options->m_strict_loading ? "True" : "False"));
+                    m_menus[m_menu_selected].replaceKeyEntry(2, (m_options->m_display_cart_info ? "True" : "False"));
+                    break;
+#ifdef DEBUG_LOGGING
+                case Logfile_Menu:
+                    m_menus[m_menu_selected].replaceKeyEntry(0, (m_options->m_log_enable ? "True" : "False"));
+                    m_menus[m_menu_selected].replaceKeyEntry(1, std::to_string(m_options->m_log_length));
+                    break;
+#endif
+            }
             switchToMenu(effect.getArg());
             break;
         case EFFECT_SAVE_OPTIONS:
@@ -399,6 +411,8 @@ bool Menu_Handler::interpretMenuEffect(EntryEffect effect) {
 #ifdef DEBUG_LOGGING
         case EFFECT_DUMP_LOGFILE:
             dumpLogFile(m_emulator->getLogfile(), m_emulator->getRomname());
+            m_options->save_temps();
+            saveOptionsFile(m_options);
             switchToMenu(effect.getArg());
             break;
 #endif

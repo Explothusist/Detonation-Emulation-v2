@@ -1,7 +1,7 @@
-v0.3.0:
-Finish Logging and Logfile dumping:
-    See phone notes for what to log
+v0.4.0:
+Working Screen
 
+Verbose vs Brief Log?
 Read in RAM file
 Background for pause menus
 

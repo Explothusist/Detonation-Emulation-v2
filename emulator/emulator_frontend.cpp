@@ -4,6 +4,7 @@
 #include "../menus/MenuHandler.h"
 #include "../SDL-Drawing-Library/DrawingContext.h"
 #include "../enable_logging.h"
+#include "emulator_log.h"
 
 DMG_Emulator::DMG_Emulator(DrawingContext* ctx, Menu_Handler* menus, Emulator_Options* options, EmulatorState &state):
     m_ctx{ ctx },
@@ -48,13 +49,14 @@ void DMG_Emulator::Start_Emulation(std::vector<uint8_t>* rom) {
     m_initialized = true;
 };
 void DMG_Emulator::Resume_Emulation() {
+    m_cpu.UpdateSettings(m_options);
+
     if (!m_emulation_begun) {
         if (!m_cart_details.hadLoadError()) {
 #ifdef DEBUG_LOGGING
             printf("COMPLETE: Emulation Setup: Emulation Beginning\n");
 #endif
             m_menus->switchToMenu(Pause_Menu); // Pause Menu
-            m_cpu.UpdateSettings(m_options);
             m_state = State_InEmulator;
             m_emulation_begun = true;
         }else {
@@ -111,7 +113,8 @@ void DMG_Emulator::unInitialize() {
 };
 
 std::deque<std::string>* DMG_Emulator::getLogfile() {
-    return m_cpu.m_logfile.getLogfile();
+    m_logfile.dumpLine(); // In case there is a hanging print
+    return m_logfile.getLogfile();
 };
 std::string DMG_Emulator::getRomname() {
     return m_cart_details.m_romname;
