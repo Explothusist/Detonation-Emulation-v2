@@ -6,6 +6,7 @@
 #include <deque>
 #include "cpu.h"
 #include "../utils.h"
+#include <cstdint>
 
 class DMG_CPU;
 class DrawingContext;
@@ -15,7 +16,7 @@ class DMG_Emulator {
     public:
         DMG_Emulator(DrawingContext* ctx, Menu_Handler* menus, Emulator_Options* options, EmulatorState &state);
 
-        void Start_Emulation(std::vector<uint8_t>* rom);
+        void Start_Emulation(std::vector<uint8_t>* rom, std::vector<uint32_t>* keybindings);
         void Resume_Emulation();
 
         void drawBackground();
@@ -23,6 +24,8 @@ class DMG_Emulator {
 
         bool hasInitialized();
         void unInitialize();
+
+        void feedKeyEvent(uint32_t key, bool state);
 
         std::deque<std::string>* getLogfile();
         std::string getRomname();

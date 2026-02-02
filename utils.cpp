@@ -4,8 +4,6 @@
 #include <SDL3/SDL.h>
 #include <algorithm>
 
-#include "emulator/emulator_log.h"
-
 std::vector<uint32_t>* get_default_keybindings() {
     return new std::vector<uint32_t>({
         SDLK_UP,

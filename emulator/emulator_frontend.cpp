@@ -4,7 +4,7 @@
 #include "../menus/MenuHandler.h"
 #include "../SDL-Drawing-Library/DrawingContext.h"
 #include "../enable_logging.h"
-#include "emulator_log.h"
+#include "components/emulator_log.h"
 
 DMG_Emulator::DMG_Emulator(DrawingContext* ctx, Menu_Handler* menus, Emulator_Options* options, EmulatorState &state):
     m_ctx{ ctx },
@@ -19,8 +19,8 @@ DMG_Emulator::DMG_Emulator(DrawingContext* ctx, Menu_Handler* menus, Emulator_Op
 
 };
 
-void DMG_Emulator::Start_Emulation(std::vector<uint8_t>* rom) {
-    m_cart_details = m_cpu.Trigger_InitializeAll(rom, m_options);
+void DMG_Emulator::Start_Emulation(std::vector<uint8_t>* rom, std::vector<uint32_t>* keybindings) {
+    m_cart_details = m_cpu.Trigger_InitializeAll(rom, m_options, keybindings);
 
     m_menus->replaceKeyEntriesOnMenu(m_cart_details.getCartDetails(), Cartridge_Info); // Cartridge Info
     m_menus->setColorsOnMenu(m_cart_details.getCartDetailColors(), Cartridge_Info);
@@ -118,4 +118,8 @@ std::deque<std::string>* DMG_Emulator::getLogfile() {
 };
 std::string DMG_Emulator::getRomname() {
     return m_cart_details.m_romname;
+};
+
+void DMG_Emulator::feedKeyEvent(uint32_t key, bool state) {
+    m_cpu.m_Memory.m_controllers.triggerEvent(key, state);
 };

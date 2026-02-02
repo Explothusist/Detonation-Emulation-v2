@@ -75,6 +75,17 @@ typedef enum {
     COLOR_RED
 } EntryColor;
 
+typedef enum {
+    ButtonUp,
+    ButtonLeft,
+    ButtonDown,
+    ButtonRight,
+    ButtonStart,
+    ButtonSelect,
+    ButtonA,
+    ButtonB
+} ButtonId;
+
 std::vector<uint32_t>* get_default_keybindings();
 
 // std::string get_string_from_keycode(uint32_t code);

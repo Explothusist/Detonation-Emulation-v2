@@ -4,7 +4,6 @@
 // #include <vector>
 #include <deque>
 #include <string>
-#include "../utils.h"
 
 class Emulator_Logfile {
     public:

@@ -1,4 +1,6 @@
 v0.4.0:
+Interrupts
+Timer/Special Registers
 Working Screen
 
 Verbose vs Brief Log?

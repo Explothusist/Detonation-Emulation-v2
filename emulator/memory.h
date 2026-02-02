@@ -4,6 +4,9 @@
 #include <cstdint>
 #include <vector>
 #include <string>
+#include "components/controller.h"
+#include "components/serial.h"
+#include "components/timer.h"
 #include "../utils.h"
 
 enum class Reg_u8 : uint8_t {
@@ -140,6 +143,9 @@ class Memory_Handler {
         bool _InterruptsPending(); // STOP
         bool _InterruptsEnabled(); // HALT
 
+        Controller_Handler m_controllers;
+        Serial_Handler m_serial;
+        Timer_Handler m_timer;
     private:
         // uint8_t X0000_ROM_STATIC[0x4000]; // (Switchable) // Reference m_RomBanks directly
         // uint8_t X4000_ROM_BANK[0x4000]; // Switchable // Reference m_RomBanks directly

@@ -6,7 +6,7 @@
 #include <cctype>
 #include "../utils.h"
 #include "../enable_logging.h"
-#include "emulator_log.h"
+#include "components/emulator_log.h"
 
 
 std::string getRegName(Reg_u8 reg) {
@@ -1252,7 +1252,32 @@ uint8_t Memory_Handler::Read() {
 #endif
         ret = m_open_bus;
     }else if (address < 0xff80) {
-        ret = XFF00_IO_REGS[address - 0xff00]; // Reading special registers...
+        switch (address) {
+            case 0xff00:
+                ret = m_controllers.read_FF00();
+                break;
+            case 0xff01:
+                ret = m_serial.read_FF01();
+                break;
+            case 0xff02:
+                ret = m_serial.read_FF02();
+                break;
+            case 0xff04:
+                ret = m_timer.read_FF04();
+                break;
+            case 0xff05:
+                ret = m_timer.read_FF05();
+                break;
+            case 0xff06:
+                ret = m_timer.read_FF06();
+                break;
+            case 0xff07:
+                ret = m_timer.read_FF07();
+                break;
+            default:
+                ret = XFF00_IO_REGS[address - 0xff00]; // Reading special registers...
+                break;
+        }
     }else if (address < 0xffff) {
         ret = XFF80_HRAM[address - 0xff80];
     }else {
@@ -1306,7 +1331,32 @@ void Memory_Handler::Write(uint8_t value) {
         printf("ERROR: Memory Read: Unusable Memory Read\n");
 #endif
     }else if (address < 0xff80) {
-        XFF00_IO_REGS[address - 0xff00] = value; // Reading special registers...
+        switch (address) {
+            case 0xff00:
+                m_controllers.write_FF00(value);
+                break;
+            case 0xff01:
+                m_serial.write_FF01(value);
+                break;
+            case 0xff02:
+                m_serial.write_FF02(value);
+                break;
+            case 0xff04:
+                m_timer.write_FF04(value);
+                break;
+            case 0xff05:
+                m_timer.write_FF05(value);
+                break;
+            case 0xff06:
+                m_timer.write_FF06(value);
+                break;
+            case 0xff07:
+                m_timer.write_FF07(value);
+                break;
+            default:
+                XFF00_IO_REGS[address - 0xff00] = value; // Reading special registers...
+                break;
+        }
     }else if (address < 0xffff) {
         XFF80_HRAM[address - 0xff80] = value;
     }else {

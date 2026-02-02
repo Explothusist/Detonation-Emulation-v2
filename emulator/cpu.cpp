@@ -2,7 +2,7 @@
 #include "cpu.h"
 
 #include "../enable_logging.h"
-#include "emulator_log.h"
+#include "components/emulator_log.h"
 
 
 DMG_CPU::DMG_CPU():
@@ -12,18 +12,21 @@ DMG_CPU::DMG_CPU():
     m_apu{ DMG_APU() },
     m_cycle_count{ 0 },
     m_curr_opcode{ nullptr },
-    // m_curr_opcode_length{ 0 },
     m_curr_opcode_mcycle{ 0 },
     m_abort{ false }
 {
 
 };
 
-Cart_Details DMG_CPU::Trigger_InitializeAll(std::vector<uint8_t>* rom, Emulator_Options* options) {
+Cart_Details DMG_CPU::Trigger_InitializeAll(std::vector<uint8_t>* rom, Emulator_Options* options, std::vector<uint32_t>* keybindings) {
     Cart_Details cart_details = m_Memory.Initialize(rom, options->m_run_boot_rom);
     Initialize(options->m_run_boot_rom, options->m_log_length, options->m_log_enable);
     m_ppu.Initialize();
     m_apu.Initialize();
+
+    m_Memory.m_controllers.Initialize(keybindings);
+    m_Memory.m_serial.Initialize();
+    m_Memory.m_timer.Initialize();
     return cart_details;
 };
 void DMG_CPU::Trigger_PowerCycle() {
@@ -31,12 +34,20 @@ void DMG_CPU::Trigger_PowerCycle() {
     PowerCycle();
     m_ppu.PowerCycle();
     m_apu.PowerCycle();
+
+    m_Memory.m_controllers.PowerCycle();
+    m_Memory.m_serial.PowerCycle();
+    m_Memory.m_timer.PowerCycle();
 };
 void DMG_CPU::Trigger_ResetButton() {
     m_Memory.Reset();
     Reset();
     m_ppu.Reset();
     m_apu.Reset();
+
+    m_Memory.m_controllers.Reset();
+    m_Memory.m_serial.Reset();
+    m_Memory.m_timer.Reset();
 };
 
 void DMG_CPU::Initialize(bool use_boot_rom, int log_length, bool log_enable) {
@@ -629,7 +640,7 @@ void DMG_CPU::runMCycle() {
 //                 printf("Opcode Run: PC: %s, Opcode: %s\n", to_b16_out(m_regs.get(Reg_u16::PC)).c_str(), to_b8_out(opcode).c_str());
                 if (m_log_enable) {
                     m_logfile.print(std::string("Opcode: ")+(m_read_cb_opcode ? "0xCB " : "")+"0x"+to_b8_out(opcode)+", "
-                            +(!m_read_cb_opcode ? getOpcodeName(opcode) : getCBOpcodeName(opcode))+"; ");
+                            +padRight(!m_read_cb_opcode ? getOpcodeName(opcode) : getCBOpcodeName(opcode), 12)+"; ");
                     m_logfile.print(m_regs.dumpState() + "; ");
                 }
 #endif
@@ -693,9 +704,6 @@ uint8_t DMG_CPU::PC_Eat_Byte() {
     m_Memory.latchBus(m_regs.get(Reg_u16::PC));
 #endif
     uint8_t ret = m_Memory.Read(); // Read from <PC>
-// #ifdef DEBUG_LOGGING
-//     printf("PC Eat: %s, Value: %s\n", padLeft(to_string_base(m_regs.get(Reg_u16::PC), 16), 4, '0').c_str(), padLeft(to_string_base(ret, 16), 2, '0').c_str());
-// #endif
     m_regs.set(Reg_u16::PC, m_regs.get(Reg_u16::PC) + 1); // Increment PC
     
 #ifdef DEBUG_LOGGING
@@ -747,6 +755,7 @@ void DMG_CPU::STOP() {
         }
     #endif
     m_stopped = true;
+    m_Memory.m_timer.resetDiv();
 };
 void DMG_CPU::HALT() {
     #ifdef DEBUG_LOGGING

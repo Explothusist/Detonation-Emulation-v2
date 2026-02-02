@@ -1,6 +1,6 @@
 
 #include "emulator_log.h"
-#include "../enable_logging.h"
+#include "../../enable_logging.h"
 
 Emulator_Logfile::Emulator_Logfile():
     m_logdump{ std::deque<std::string>() },

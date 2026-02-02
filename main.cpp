@@ -209,13 +209,18 @@ int main() {
                                 bool begin_emulation = m_menus->processEvent(&event);
                                 if (begin_emulation) {
                                     if (!m_emulator->hasInitialized()) {
-                                        m_emulator->Start_Emulation(m_menus->getROM());
+                                        m_emulator->Start_Emulation(m_menus->getROM(), m_keybindings);
                                     }else {
                                         m_emulator->Resume_Emulation();
                                     }
                                 } }
                                 break;
                             case State_InEmulator:
+                                if (event.type == SDL_EVENT_KEY_DOWN) {
+                                    m_emulator->feedKeyEvent(event.key.key, true);
+                                }else if (event.type == SDL_EVENT_KEY_UP) {
+                                    m_emulator->feedKeyEvent(event.key.key, false);
+                                }
                                 break;
                         }
                     } 
