@@ -18,6 +18,15 @@ void DMG_PPU::Reset() {
 
 };
 
+void DMG_PPU::runMCycle() {
+    for (int i = 0; i < 4; i++) {
+        runTCycle();
+    }
+};
+void DMG_PPU::runTCycle() {
+
+};
+
 // void DMG_PPU::PresentScreen() {
 
 // };

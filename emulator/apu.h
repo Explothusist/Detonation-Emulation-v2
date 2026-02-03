@@ -10,6 +10,9 @@ class DMG_APU {
         void PowerCycle();
         void Reset();
 
+        void runMCycle();
+        void runTCycle();
+
     private:
 
 };

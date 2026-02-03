@@ -17,3 +17,12 @@ void DMG_APU::PowerCycle() {
 void DMG_APU::Reset() {
     
 };
+
+void DMG_APU::runMCycle() {
+    for (int i = 0; i < 4; i++) {
+        runTCycle();
+    }
+};
+void DMG_APU::runTCycle() {
+    
+};

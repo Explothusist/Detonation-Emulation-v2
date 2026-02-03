@@ -1,7 +1,10 @@
+ROM is read as entirely blank!!!!!
+
 v0.4.0:
 Interrupts
 Timer/Special Registers
 Working Screen
+CPU Abort Popup
 
 Verbose vs Brief Log?
 Read in RAM file

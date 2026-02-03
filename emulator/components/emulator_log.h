@@ -8,9 +8,13 @@
 class Emulator_Logfile {
     public:
         Emulator_Logfile();
+        
+        void Initialize(int log_length, bool log_enable);
+        void PowerCycle();
+        void Reset();
 
-        void clearLog();
-        void setOptions(int log_length, bool log_enable);
+        // void clearLog();
+        // void setOptions(int log_length, bool log_enable);
 
         void print(std::string);
         void println(std::string value);

@@ -86,6 +86,14 @@ typedef enum {
     ButtonB
 } ButtonId;
 
+typedef enum {
+    VBLANK_INTERRUPT,
+    LCD_INTERRUPT,
+    TIMER_INTERRUPT,
+    SERIAL_INTERRUPT,
+    JOYPAD_INTERRUPT
+} Interrupt_Type;
+
 std::vector<uint32_t>* get_default_keybindings();
 
 // std::string get_string_from_keycode(uint32_t code);

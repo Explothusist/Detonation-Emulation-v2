@@ -563,33 +563,42 @@ std::string getCBOpcodeName(uint8_t opcode) {
 };
 
 // ----------------- Special -----------------
+// int nop_count = 0;
 void NOP_MCycle_1(DMG_CPU &m_cpu) {
     // Do Nothing
+    // nop_count += 1;
+    // if (nop_count > 100) {
+    //     m_cpu.callAbort();
+    // }
 };
 Opcode Opcode_x00_NOP = { { NOP_MCycle_1 }, 1 };
 
 void STOP_MCycle_1(DMG_CPU &m_cpu) {
-    if (m_cpu.m_Memory._InterruptsPending()) {
+    // if (m_cpu.m_Memory._InterruptsPending()) {
+    if (m_cpu.m_Memory.m_interrupts.hasInterruptPending()) {
         m_cpu.clearOpcode();
     }
 };
 void STOP_MCycle_2(DMG_CPU &m_cpu) {
     m_cpu.PC_Eat_Byte(); // Byte is discarded
-    if (!m_cpu.WAKE()) {
+    if (!m_cpu.m_Memory.m_controllers.anyButtonPressed()) {
         m_cpu.STOP();
     }
 };
 Opcode Opcode_x10_STOP = { { STOP_MCycle_1, STOP_MCycle_2 }, 2 };
 
 void HALT_MCycle_1(DMG_CPU &m_cpu) {
-    if (m_cpu.m_Memory._InterruptsEnabled()) {
-        if (m_cpu.m_Memory._InterruptsPending()) {
+    // if (m_cpu.m_Memory._InterruptsEnabled()) {
+    if (m_cpu.m_Memory.m_interrupts.interruptsEnabled()) {
+        // if (m_cpu.m_Memory._InterruptsPending()) {
+        if (m_cpu.m_Memory.m_interrupts.hasInterruptPending()) {
             m_cpu.clearOpcode(); // Executes semi-normally
         }else {
             m_cpu.HALT();
         }
     }else {
-        if (m_cpu.m_Memory._InterruptsPending()) {
+        // if (m_cpu.m_Memory._InterruptsPending()) {
+        if (m_cpu.m_Memory.m_interrupts.hasInterruptPending()) {
             // Halt Bug
             m_cpu.HALT_Bug();
             m_cpu.clearOpcode();
@@ -934,6 +943,12 @@ Opcode Opcode_xE7_RST_20 = { { RST_MCycle_1<0x0020>, RST_MCycle_2<0x0020>, RST_M
 Opcode Opcode_xEF_RST_28 = { { RST_MCycle_1<0x0028>, RST_MCycle_2<0x0028>, RST_MCycle_3<0x0028>, RST_MCycle_4<0x0028> }, 4 };
 Opcode Opcode_xF7_RST_30 = { { RST_MCycle_1<0x0030>, RST_MCycle_2<0x0030>, RST_MCycle_3<0x0030>, RST_MCycle_4<0x0030> }, 4 };
 Opcode Opcode_xFF_RST_38 = { { RST_MCycle_1<0x0038>, RST_MCycle_2<0x0038>, RST_MCycle_3<0x0038>, RST_MCycle_4<0x0038> }, 4 };
+
+Opcode Interrupt_VBLANK_RST_40 = { { NOP_MCycle_1, RST_MCycle_1<0x0040>, RST_MCycle_2<0x0040>, RST_MCycle_3<0x0040>, RST_MCycle_4<0x0040> }, 5 };
+Opcode Interrupt_LCD_RST_48 = { { NOP_MCycle_1, RST_MCycle_1<0x0048>, RST_MCycle_2<0x0048>, RST_MCycle_3<0x0048>, RST_MCycle_4<0x0048> }, 5 };
+Opcode Interrupt_TIMER_RST_50 = { { NOP_MCycle_1, RST_MCycle_1<0x0050>, RST_MCycle_2<0x0050>, RST_MCycle_3<0x0050>, RST_MCycle_4<0x0050> }, 5 };
+Opcode Interrupt_SERIAL_RST_58 = { { NOP_MCycle_1, RST_MCycle_1<0x0058>, RST_MCycle_2<0x0058>, RST_MCycle_3<0x0058>, RST_MCycle_4<0x0058> }, 5 };
+Opcode Interrupt_JOYPAD_RST_60 = { { NOP_MCycle_1, RST_MCycle_1<0x0060>, RST_MCycle_2<0x0060>, RST_MCycle_3<0x0060>, RST_MCycle_4<0x0060> }, 5 };
 
 
 // ----------------- Returns -----------------

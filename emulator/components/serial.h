@@ -5,15 +5,17 @@
 #include <vector>
 #include <string>
 
+class Interrupt_Handler;
+
 class Serial_Handler {
     public:
         Serial_Handler();
 
-        void Initialize();
+        void Initialize(Interrupt_Handler* interrupts);
         void PowerCycle();
         void Reset();
 
-        bool pollInterrupt();
+        void requestInterrupt();
 
         void write_FF01(uint8_t value);
         uint8_t read_FF01();
@@ -24,9 +26,9 @@ class Serial_Handler {
         uint8_t m_ff01;
         uint8_t m_ff02;
 
-        bool m_interrupt;
-
         std::string m_debug_out; // Optional Serial as debug out (Blaarg's, etc.)
+
+        Interrupt_Handler* m_interrupts;
 };
 
 #endif

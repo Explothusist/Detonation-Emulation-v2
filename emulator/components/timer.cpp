@@ -3,6 +3,8 @@
 
 #include "emulator_log.h"
 #include "../../enable_logging.h"
+#include "interrupts.h"
+#include "../../utils.h"
 
 Timer_Handler::Timer_Handler():
     m_internal_counter{ 0 },
@@ -13,13 +15,13 @@ Timer_Handler::Timer_Handler():
     m_tima_shift{ 9 },
     m_tima_overflow{ false },
     m_tima_overflow_delay{ 0 },
-    m_interrupt{ false }
+    m_interrupts{ nullptr }
 {
 
 };
 
-void Timer_Handler::Initialize() {
-
+void Timer_Handler::Initialize(Interrupt_Handler* interrupts) {
+    m_interrupts = interrupts;
 };
 void Timer_Handler::PowerCycle() {
     Reset();
@@ -49,10 +51,14 @@ void Timer_Handler::runTCycle() {
         m_tima_overflow_delay -= 1;
         if (m_tima_overflow_delay == 0) {
             m_tima_overflow = false;
-            m_interrupt = true;
+            requestInterrupt();
             m_ff05_tima = m_ff06_t_mod;
         }
     }
+};
+
+void Timer_Handler::requestInterrupt() {
+    m_interrupts->requestInterrupt(TIMER_INTERRUPT);
 };
 
 

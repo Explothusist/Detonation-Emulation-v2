@@ -30,6 +30,8 @@ class DMG_CPU {
         Opcode* parseCBOpcode(uint8_t opcode);
         void clearOpcode(); // So that variable length ones can fix themselves
         void loadCBOpcode();
+        void fireInterrupt(Opcode* rst_code);
+        bool isBetweenOpcodes();
         void runMCycle();
         void runTCycle();
 
@@ -40,7 +42,7 @@ class DMG_CPU {
         void STOP();
         void HALT();
         void HALT_Bug();
-        bool WAKE();
+        // bool WAKE();
 
         uint8_t PC_Eat_Byte();
         uint8_t ALU_B8_ADDER(uint8_t num1, uint8_t num2, uint8_t carry_bit = 0);

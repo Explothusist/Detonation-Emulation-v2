@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cctype>
+#include <string>
 #include "../utils.h"
 #include "../enable_logging.h"
 #include "components/emulator_log.h"
@@ -734,7 +735,7 @@ void Memory_Handler::interpret_rom_size_type(uint8_t rom_size, Cart_Details &car
 void Memory_Handler::interpret_ram_size_type(uint8_t ram_size, Cart_Details &cart_details) {
     switch (ram_size) {
         case 0x00:
-            m_num_rom_banks = 0;
+            m_num_ram_banks = 0;
             cart_details.m_ram_size_name = "No RAM";
             break;
         case 0x01: // Only listed in unofficial docs
@@ -747,23 +748,23 @@ void Memory_Handler::interpret_ram_size_type(uint8_t ram_size, Cart_Details &car
             cart_details.m_ram_size_name_color = COLOR_ORANGE;
             // cart_details.m_has_load_error = true;
             cart_details.m_has_load_warning = true;
-            m_num_rom_banks = 1;
+            m_num_ram_banks = 1;
             cart_details.m_ram_size_name = "(1) RAM Bank, 2 KiB (Unused Type)";
             break;
         case 0x02:
-            m_num_rom_banks = 1;
+            m_num_ram_banks = 1;
             cart_details.m_ram_size_name = "1 RAM Bank, 8 KiB";
             break;
         case 0x03:
-            m_num_rom_banks = 4;
+            m_num_ram_banks = 4;
             cart_details.m_ram_size_name = "4 RAM Bank, 32 KiB";
             break;
         case 0x04:
-            m_num_rom_banks = 16;
+            m_num_ram_banks = 16;
             cart_details.m_ram_size_name = "16 RAM Bank, 128 KiB";
             break;
         case 0x05:
-            m_num_rom_banks = 8;
+            m_num_ram_banks = 8;
             cart_details.m_ram_size_name = "8 RAM Bank, 64 KiB";
             break;
         default:
@@ -1156,6 +1157,9 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
 
     cart_details.m_num_rom_banks = m_num_rom_banks;
     cart_details.m_num_ram_banks = m_num_ram_banks;
+
+    // printf("0x0000: %i, 0x0001: %i, 0x0002: %i, 0x003: %i\n", rom->at(0), rom->at(1), rom->at(2), rom->at(3));
+    // printf("Num ROM Banks: %i\n", m_num_rom_banks);
     
     constexpr size_t ROM_BANK_SIZE = 0x4000;
     for (int bank = 0; bank < m_num_rom_banks; ++bank) {
@@ -1164,7 +1168,12 @@ Cart_Details Memory_Handler::Initialize(std::vector<uint8_t>* rom, bool use_boot
             rom->data() + bank * ROM_BANK_SIZE,
             ROM_BANK_SIZE
         );
+        // for (int i = 0; i < ROM_BANK_SIZE; i++) {
+        //     m_RomBanks[bank][i] = rom->at(bank * ROM_BANK_SIZE + i);
+        // }
     }
+    
+    // printf("0x0000: %i, 0x0001: %i, 0x0002: %i, 0x003: %i\n", m_RomBanks[0][0], m_RomBanks[0][1], m_RomBanks[0][2], m_RomBanks[0][3]);
 
     // Read Saved RAM WORKING HERE
 
@@ -1274,6 +1283,9 @@ uint8_t Memory_Handler::Read() {
             case 0xff07:
                 ret = m_timer.read_FF07();
                 break;
+            case 0xff0f:
+                ret = m_interrupts.read_FF0F();
+                break;
             default:
                 ret = XFF00_IO_REGS[address - 0xff00]; // Reading special registers...
                 break;
@@ -1281,7 +1293,7 @@ uint8_t Memory_Handler::Read() {
     }else if (address < 0xffff) {
         ret = XFF80_HRAM[address - 0xff80];
     }else {
-        ret = XFFFF_IE;
+        ret = m_interrupts.read_FFFF();
     }
     m_open_bus = ret; // Update m_open_bus
     #ifdef DEBUG_LOGGING
@@ -1353,6 +1365,9 @@ void Memory_Handler::Write(uint8_t value) {
             case 0xff07:
                 m_timer.write_FF07(value);
                 break;
+            case 0xff0f:
+                m_interrupts.write_FF0F(value);
+                break;
             default:
                 XFF00_IO_REGS[address - 0xff00] = value; // Reading special registers...
                 break;
@@ -1360,7 +1375,7 @@ void Memory_Handler::Write(uint8_t value) {
     }else if (address < 0xffff) {
         XFF80_HRAM[address - 0xff80] = value;
     }else {
-        XFFFF_IE = value;
+        m_interrupts.write_FFFF(value);
     }
 };
 uint8_t Memory_Handler::_Get(uint16_t address) {
@@ -1452,6 +1467,7 @@ void Memory_Handler::_Set_IME(bool value) {
     #endif
     IME = value;
     IME_Delayed = value; // So that Delayed doesn't undo the change
+    m_interrupts.write_IME(IME);
 };
 void Memory_Handler::_Set_IME_Delayed(bool value) {
     #ifdef DEBUG_LOGGING
@@ -1464,23 +1480,24 @@ void Memory_Handler::_Set_IME_Delayed(bool value) {
 void Memory_Handler::handleIME() {
     if (IME_Delayed != IME) {
         IME = IME_Delayed;
+        m_interrupts.write_IME(IME);
     }
 };
 
-bool Memory_Handler::_InterruptsPending() {
-    #ifdef DEBUG_LOGGING
-        if (m_log_enable) {
-            m_logfile.print("Checked Pending Interrupts, ");
-        }
-    #endif
-    return (_Get(0xff0f) & _Get(0xffff) & 0x1f) == 0;
-};
-bool Memory_Handler::_InterruptsEnabled() {
-    #ifdef DEBUG_LOGGING
-        if (m_log_enable) {
-            m_logfile.print("Checked Interrupts Enabled, ");
-        }
-    #endif
-    return IME;
-};
+// bool Memory_Handler::_InterruptsPending() {
+//     #ifdef DEBUG_LOGGING
+//         if (m_log_enable) {
+//             m_logfile.print("Checked Pending Interrupts, ");
+//         }
+//     #endif
+//     return (m_interrupts.read_FF0F() & m_interrupts.read_FFFF() & 0x1f) == 0;
+// };
+// bool Memory_Handler::_InterruptsEnabled() {
+//     #ifdef DEBUG_LOGGING
+//         if (m_log_enable) {
+//             m_logfile.print("Checked Interrupts Enabled, ");
+//         }
+//     #endif
+//     return IME;
+// };
 

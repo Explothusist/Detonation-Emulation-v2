@@ -5,17 +5,20 @@
 #include <vector>
 #include <string>
 
+class Interrupt_Handler;
+
 class Timer_Handler {
     public:
         Timer_Handler();
 
-        void Initialize();
+        void Initialize(Interrupt_Handler* interrupts);
         void PowerCycle();
         void Reset();
 
         void runMCycle();
         void runTCycle();
-        bool pollInterrupt();
+
+        void requestInterrupt();
 
         void resetDiv(); // Happens on STOP
         void incTIMA();
@@ -42,7 +45,9 @@ class Timer_Handler {
 
         bool m_tima_overflow;
         int m_tima_overflow_delay;
-        bool m_interrupt;
+        // bool m_interrupt;
+
+        Interrupt_Handler* m_interrupts;
 };
 
 #endif

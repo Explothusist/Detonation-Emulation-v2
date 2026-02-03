@@ -78,6 +78,12 @@ extern Opcode Opcode_xEF_RST_28;
 extern Opcode Opcode_xF7_RST_30;
 extern Opcode Opcode_xFF_RST_38;
 
+extern Opcode Interrupt_VBLANK_RST_40;
+extern Opcode Interrupt_LCD_RST_48;
+extern Opcode Interrupt_TIMER_RST_50;
+extern Opcode Interrupt_SERIAL_RST_58;
+extern Opcode Interrupt_JOYPAD_RST_60;
+
 // ----------------- Returns -----------------
 extern Opcode Opcode_xC9_RET;
 extern Opcode Opcode_xC0_RET_NZ;

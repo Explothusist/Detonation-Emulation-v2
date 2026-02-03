@@ -24,9 +24,9 @@ Cart_Details DMG_CPU::Trigger_InitializeAll(std::vector<uint8_t>* rom, Emulator_
     m_ppu.Initialize();
     m_apu.Initialize();
 
-    m_Memory.m_controllers.Initialize(keybindings);
-    m_Memory.m_serial.Initialize();
-    m_Memory.m_timer.Initialize();
+    m_Memory.m_controllers.Initialize(keybindings, &m_Memory.m_interrupts);
+    m_Memory.m_serial.Initialize(&m_Memory.m_interrupts);
+    m_Memory.m_timer.Initialize(&m_Memory.m_interrupts);
     return cart_details;
 };
 void DMG_CPU::Trigger_PowerCycle() {
@@ -66,7 +66,7 @@ void DMG_CPU::Initialize(bool use_boot_rom, int log_length, bool log_enable) {
         m_regs.set(Reg_u8::L, 0x46);
         m_regs.set(Reg_u16::SP, 0xfffe);
     }
-    m_logfile.setOptions(log_length, log_enable);
+    m_logfile.Initialize(log_length, log_enable);
     m_log_enable = log_enable;
     m_logfile.println("Emulator Initialized");
 };
@@ -79,11 +79,23 @@ void DMG_CPU::Reset() {
     // m_curr_opcode_length = 0;
     m_curr_opcode_mcycle = 0;
     m_abort = false;
-    m_logfile.clearLog();
+    m_logfile.Reset();
+
+    m_regs.set(Reg_u16::PC, 0x0000);
+    m_regs.set(Reg_u8::A, 0x00);
+    m_regs.set(Reg_u8::F, 0b0000'0000);
+    m_regs.set(Reg_u8::B, 0x00);
+    m_regs.set(Reg_u8::C, 0x00);
+    m_regs.set(Reg_u8::D, 0x00);
+    m_regs.set(Reg_u8::E, 0x00);
+    m_regs.set(Reg_u8::H, 0x00);
+    m_regs.set(Reg_u8::L, 0x00);
+    m_regs.set(Reg_u16::SP, 0x0000);
+    m_regs.set(Reg_u16::WZ, 0x0000);
 };
 void DMG_CPU::UpdateSettings(Emulator_Options* options) {
     m_log_enable = options->m_log_enable;
-    m_logfile.setOptions(options->m_log_length, options->m_log_enable);
+    m_logfile.Initialize(options->m_log_length, options->m_log_enable);
 };
 
 
@@ -622,9 +634,17 @@ void DMG_CPU::loadCBOpcode() {
     // m_curr_opcode = parseCBOpcode(opcode);
     m_read_cb_opcode = true;
 };
+void DMG_CPU::fireInterrupt(Opcode* rst_code) {
+    clearOpcode(); // Opcode should already be cleared, but just to make sure
+    m_curr_opcode = rst_code;
+    m_Memory._Set_IME(false);
+};
+bool DMG_CPU::isBetweenOpcodes() {
+    return (m_curr_opcode == nullptr);
+};
 void DMG_CPU::runMCycle() {
     if (!m_abort) {
-        // Interrupts
+        m_Memory.m_interrupts.runMCycle(*this);
         m_Memory.handleIME();
 
         if (!m_stopped && !m_halted) {
@@ -667,10 +687,22 @@ void DMG_CPU::runMCycle() {
                 m_logfile.print(std::string("($M-Cycle) "));
             }
 #endif
+        }else if (m_stopped) {
+            if (m_Memory.m_controllers.anyButtonPressed()) {
+                m_stopped = false;
+            }
+        }else if (m_halted) {
+            if (m_Memory.m_interrupts.anyInterruptRequested()) { // Even if IME=false
+                m_halted = false;
+                if (!m_Memory.m_interrupts.interruptsEnabled()) {
+                    HALT_Bug();
+                }
+            }
         }
-        // Timers
-        // PPU
-        // APU
+
+        m_Memory.m_timer.runMCycle();
+        m_ppu.runMCycle();
+        m_apu.runMCycle();
     }
 };
 void DMG_CPU::runTCycle() {
@@ -773,11 +805,11 @@ void DMG_CPU::HALT_Bug() {
     #endif
     m_halt_bug = true;
 };
-bool DMG_CPU::WAKE() {
-    #ifdef DEBUG_LOGGING
-        if (m_log_enable) {
-            m_logfile.print("Check WAKE (joysticks), ");
-        }
-    #endif
-    return false; // Returns true if any buttons are pressed
-};
+// bool DMG_CPU::WAKE() {
+//     #ifdef DEBUG_LOGGING
+//         if (m_log_enable) {
+//             m_logfile.print("Check WAKE (joysticks), ");
+//         }
+//     #endif
+//     return m_Memory.m_controllers.WAKE(); // Returns true if any buttons are pressed
+// };

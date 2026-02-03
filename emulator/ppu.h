@@ -10,6 +10,12 @@ class DMG_PPU {
         void PowerCycle();
         void Reset();
 
+        void runMCycle();
+        void runTCycle();
+
+        bool pollVBlankInterrupt();
+        bool pollLCDInterrupt();
+
         // void PresentScreen();
 
     private:

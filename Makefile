@@ -32,7 +32,7 @@ SDL_LDLIBS  = -lSDL3 -lSDL3_image -lSDL3_ttf
 # --- Source files ---
 DRAWING_LIB_SRCS = SDL-Drawing-Library/DrawingContext.cpp SDL-Drawing-Library/WindowHandler.cpp
 INTERFACE_SRCS = menus/MenuHandler.cpp
-EMULATOR_SRCS  = emulator/apu.cpp emulator/cpu.cpp emulator/emulator_frontend.cpp emulator/memory.cpp emulator/opcodes.cpp emulator/ppu.cpp emulator/components/controller.cpp emulator/components/emulator_log.cpp emulator/components/serial.cpp emulator/components/timer.cpp
+EMULATOR_SRCS  = emulator/apu.cpp emulator/cpu.cpp emulator/emulator_frontend.cpp emulator/memory.cpp emulator/opcodes.cpp emulator/ppu.cpp emulator/components/controller.cpp emulator/components/serial.cpp emulator/components/timer.cpp emulator/components/interrupts.cpp emulator/components/emulator_log.cpp
 HELPER_SRCS    = $(INTERFACE_SRCS) $(EMULATOR_SRCS) filehandle.cpp utils.cpp
 
 # --- Object files in build/ ---

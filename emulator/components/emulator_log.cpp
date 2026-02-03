@@ -9,15 +9,28 @@ Emulator_Logfile::Emulator_Logfile():
 
 };
 
-void Emulator_Logfile::clearLog() {
-    m_logdump.clear();
-};
-void Emulator_Logfile::setOptions(int log_length, bool log_enable) {
+void Emulator_Logfile::Initialize(int log_length, bool log_enable) {
     m_log_length = log_length;
     if (!log_enable) {
-        clearLog();
+        Reset();
     }
 };
+void Emulator_Logfile::PowerCycle() {
+    Reset();
+};
+void Emulator_Logfile::Reset() {
+    m_logdump.clear();
+};
+
+// void Emulator_Logfile::clearLog() {
+//     m_logdump.clear();
+// };
+// void Emulator_Logfile::setOptions(int log_length, bool log_enable) {
+//     m_log_length = log_length;
+//     if (!log_enable) {
+//         clearLog();
+//     }
+// };
 
 
 void Emulator_Logfile::print(std::string value) {
